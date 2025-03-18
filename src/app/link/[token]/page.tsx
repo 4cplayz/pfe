@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface TokenPageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 export default function TokenPage({ params }: TokenPageProps) {
-  const { token } = params;
+  // Unwrap the params Promise using React.use()
+  const { token } = React.use(params);
+
   const [studentId, setStudentId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,6 @@ export default function TokenPage({ params }: TokenPageProps) {
 
     try {
       // Here you would validate the student ID with your backend
-      // For now, we'll just simulate a successful submission
       console.log(`Student ID ${studentId} submitted with token ${token}`);
 
       // Redirect or show success message
