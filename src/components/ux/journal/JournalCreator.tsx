@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Save, FileText } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Define the access level type
+type AccessLevel = "Étudiant" | "Professeur" | "Responsable";
 
 interface JournalCreatorProps {
   journal: Journal;
@@ -33,8 +43,8 @@ export function JournalCreator({
     onChange({ ...journal, description: e.target.value });
   };
 
-  const handlePermissionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...journal, permission: e.target.value });
+  const handlePermissionChange = (value: string) => {
+    onChange({ ...journal, permission: value });
   };
 
   const handleSectionToggle = (sectionId: string, checked: boolean) => {
@@ -85,13 +95,20 @@ export function JournalCreator({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="permission">Permission:</Label>
-              <Input
-                id="permission"
+              <Label htmlFor="permission">Niveau d'accès:</Label>
+              <Select
                 value={journal.permission}
-                onChange={handlePermissionChange}
-                placeholder="Groupe d'utilisateurs autorisés"
-              />
+                onValueChange={handlePermissionChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionnez un niveau d'accès" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Étudiant">Étudiant</SelectItem>
+                  <SelectItem value="Professeur">Professeur</SelectItem>
+                  <SelectItem value="Responsable">Responsable</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 pt-2">

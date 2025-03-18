@@ -47,7 +47,7 @@ export function JournalPreview({ journal }: JournalPreviewProps) {
           Aperçu du journal de bord tel qu'il apparaîtra aux utilisateurs
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6 overflow-auto max-h-[calc(100vh-250px)]">
+      <CardContent className="space-y-6 ">
         {/* Journal Header */}
         <div className="space-y-4">
           <div>
