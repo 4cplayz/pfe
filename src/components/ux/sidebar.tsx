@@ -4,7 +4,7 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BookOpen, Users, BarChart3, FileText, Lock, Settings } from "lucide-react";
+import { BookOpen, Users, BarChart3, FileText, Lock, Settings,PieChart } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme/themeSwitcher";
 
 interface SidebarItemProps {
@@ -38,10 +38,10 @@ export function CustomSidebar({ children }: CustomSidebarProps) {
   const pathname = usePathname();
 
   const menuItems = [
-    { href: "/admin", icon: <BarChart3 size={20} />, label: "Dashboard" },
+    { href: "/admin", icon: <PieChart size={20} />, label: "Dashboard" },
     { href: "/admin/journals", icon: <FileText size={20} />, label: "Journal de bord" },
     { href: "/admin/stats", icon: <BarChart3 size={20} />, label: "Statistique" },
-    { href: "/admin/manager", icon: <Users size={20} />, label: "Parametre d'accès" },
+    { href: "/admin/manager", icon: <Users size={20} />, label: "Paramètre" },
     { href: "/admin/access", icon: <Lock size={20} />, label: "Tableau d'accès" },
   ];
 
