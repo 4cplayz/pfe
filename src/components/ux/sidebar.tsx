@@ -41,8 +41,8 @@ export function CustomSidebar({ children }: CustomSidebarProps) {
     { href: "/admin", icon: <BarChart3 size={20} />, label: "Dashboard" },
     { href: "/admin/journals", icon: <FileText size={20} />, label: "Journal de bord" },
     { href: "/admin/stats", icon: <BarChart3 size={20} />, label: "Statistique" },
-    { href: "/admin/manager", icon: <Users size={20} />, label: "Parametre d'acces" },
-    { href: "/admin/access", icon: <Lock size={20} />, label: "Access Control" },
+    { href: "/admin/manager", icon: <Users size={20} />, label: "Parametre d'accès" },
+    { href: "/admin/access", icon: <Lock size={20} />, label: "Tableau d'accès" },
   ];
 
   return (

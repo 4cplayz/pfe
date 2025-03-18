@@ -34,7 +34,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 // Define user access levels
-type AccessLevel = "Étudiant" | "Délégué" | "Responsable";
+type AccessLevel = "Étudiant" | "Professeur" | "Responsable";
 
 // Define user model
 interface User {
@@ -48,7 +48,7 @@ interface User {
 const userFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   matricule: z.string().length(7, "Le matricule doit contenir 7 chiffres").regex(/^\d+$/, "Le matricule doit contenir uniquement des chiffres"),
-  accessLevel: z.enum(["Étudiant", "Délégué", "Responsable"], {
+  accessLevel: z.enum(["Étudiant", "Professeur", "Responsable"], {
     required_error: "Veuillez sélectionner un niveau d'accès",
   }),
 });
@@ -59,12 +59,12 @@ export default function AccessControl() {
   // Mock data - would be replaced with API calls in the future
   const [users, setUsers] = useState<User[]>([
     { id: "1", name: "Jean Tremblay", matricule: "1234567", accessLevel: "Étudiant" },
-    { id: "2", name: "Marie Dubois", matricule: "2345678", accessLevel: "Délégué" },
+    { id: "2", name: "Marie Dubois", matricule: "2345678", accessLevel: "Professeur" },
     { id: "3", name: "Pierre Lavoie", matricule: "3456789", accessLevel: "Étudiant" },
     { id: "4", name: "Sophie Martin", matricule: "4567890", accessLevel: "Responsable" },
     { id: "5", name: "Michel Côté", matricule: "5678901", accessLevel: "Étudiant" },
     { id: "6", name: "Julie Gagnon", matricule: "6789012", accessLevel: "Étudiant" },
-    { id: "7", name: "David Bouchard", matricule: "7890123", accessLevel: "Délégué" },
+    { id: "7", name: "David Bouchard", matricule: "7890123", accessLevel: "Professeur" },
     { id: "8", name: "Isabelle Roy", matricule: "8901234", accessLevel: "Étudiant" },
     { id: "9", name: "François Lemieux", matricule: "9012345", accessLevel: "Étudiant" },
     { id: "10", name: "Natalie Simard", matricule: "0123456", accessLevel: "Responsable" },
@@ -161,7 +161,7 @@ export default function AccessControl() {
   };
 
   return (
-    <div className="space-y-6 ">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Tableau d'accès</h1>
       </div>
@@ -183,38 +183,39 @@ export default function AccessControl() {
           </Button>
         </div>
 
-        <div className="rounded-b-lg border-t">
-          <div className="overflow-y-auto" style={{ maxHeight: "calc(8 * 56px)" }}>
-            <table className="w-full">
-              <thead className="sticky top-0 z-10 bg-card">
-                <tr className="border-b transition-colors">
-                  <th className="h-10 px-4 text-center align-middle font-medium">Nom</th>
-                  <th className="h-10 px-4 text-center align-middle font-medium">Matricule</th>
-                  <th className="h-10 px-4 text-center align-middle font-medium">Niveau d'accès</th>
-                  <th className="h-10 w-[150px] px-4 text-center align-middle font-medium">Modifier</th>
-                  <th className="h-10 w-[150px] px-4 text-center align-middle font-medium">Supprimer</th>
-                </tr>
-              </thead>
-              <tbody>
+        {/* Table container with fixed height and overflow */}
+        <div className="border-t">
+          <div className="max-h-112 overflow-y-auto">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
+                <TableRow>
+                  <TableHead className="text-center">Nom</TableHead>
+                  <TableHead className="text-center">Matricule</TableHead>
+                  <TableHead className="text-center">Niveau d'accès</TableHead>
+                  <TableHead className="w-[150px] text-center">Modifier</TableHead>
+                  <TableHead className="w-[150px] text-center">Supprimer</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredUsers.length === 0 ? (
-                  <tr className="border-b transition-colors">
-                    <td colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       Aucun utilisateur trouvé
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="h-14 border-b transition-colors hover:bg-muted/50">
-                      <td className="px-4 text-center align-middle">{user.name}</td>
-                      <td className="px-4 text-center align-middle">{user.matricule}</td>
-                      <td className="px-4 text-center align-middle">{user.accessLevel}</td>
-                      <td className="px-4 text-center align-middle">
+                    <TableRow key={user.id}>
+                      <TableCell className="text-center">{user.name}</TableCell>
+                      <TableCell className="text-center">{user.matricule}</TableCell>
+                      <TableCell className="text-center">{user.accessLevel}</TableCell>
+                      <TableCell className="text-center">
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(user)}>
                           <Pencil className="h-4 w-4" />
                           <span className="sr-only">Modifier</span>
                         </Button>
-                      </td>
-                      <td className="px-4 text-center align-middle">
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -224,12 +225,12 @@ export default function AccessControl() {
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Supprimer</span>
                         </Button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       </div>
@@ -292,7 +293,7 @@ export default function AccessControl() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="Étudiant">Étudiant</SelectItem>
-                        <SelectItem value="Délégué">Délégué</SelectItem>
+                        <SelectItem value="Professeur">Professeur</SelectItem>
                         <SelectItem value="Responsable">Responsable</SelectItem>
                       </SelectContent>
                     </Select>
@@ -368,7 +369,7 @@ export default function AccessControl() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="Étudiant">Étudiant</SelectItem>
-                        <SelectItem value="Délégué">Délégué</SelectItem>
+                        <SelectItem value="Professeur">Professeur</SelectItem>
                         <SelectItem value="Responsable">Responsable</SelectItem>
                       </SelectContent>
                     </Select>
