@@ -1,21 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -85,7 +85,7 @@ export default function AccessControl() {
       accessLevel: "Étudiant",
     },
   });
-
+  
   const editForm = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -102,7 +102,7 @@ export default function AccessControl() {
       setFilteredUsers(users);
       return;
     }
-
+    
     const searchTerm = searchQuery.toLowerCase().trim();
     const filtered = users.filter(
       (user) =>
@@ -121,7 +121,7 @@ export default function AccessControl() {
       matricule: data.matricule,
       accessLevel: data.accessLevel,
     };
-
+    
     setUsers([...users, newUser]);
     setIsAddDialogOpen(false);
     form.reset();
@@ -130,13 +130,13 @@ export default function AccessControl() {
   // Handle editing a user
   const onEditUser = (data: UserFormValues) => {
     if (!currentUser) return;
-
+    
     const updatedUsers = users.map((user) =>
       user.id === currentUser.id
         ? { ...user, ...data }
         : user
     );
-
+    
     setUsers(updatedUsers);
     setIsEditDialogOpen(false);
     setCurrentUser(null);
@@ -161,7 +161,7 @@ export default function AccessControl() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Tableau d'accès</h1>
       </div>
@@ -183,8 +183,8 @@ export default function AccessControl() {
           </Button>
         </div>
 
-        <div className="overflow-hidden rounded-b-lg border-t">
-          <div style={{ maxHeight: "calc(8 * 56px)" }} className="overflow-auto">
+        <div className="rounded-b-lg border-t">
+          <div className="overflow-y-auto" style={{ maxHeight: "calc(8 * 56px)" }}>
             <table className="w-full">
               <thead className="sticky top-0 z-10 bg-card">
                 <tr className="border-b transition-colors">
@@ -215,9 +215,9 @@ export default function AccessControl() {
                         </Button>
                       </td>
                       <td className="px-4 text-center align-middle">
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
                           onClick={() => onDeleteUser(user.id)}
                           className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                         >
@@ -265,10 +265,10 @@ export default function AccessControl() {
                   <FormItem>
                     <FormLabel>Matricule</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="1234567"
-                        maxLength={7}
-                        {...field}
+                      <Input 
+                        placeholder="1234567" 
+                        maxLength={7} 
+                        {...field} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -342,9 +342,9 @@ export default function AccessControl() {
                   <FormItem>
                     <FormLabel>Matricule</FormLabel>
                     <FormControl>
-                      <Input
-                        maxLength={7}
-                        {...field}
+                      <Input 
+                        maxLength={7} 
+                        {...field} 
                       />
                     </FormControl>
                     <FormMessage />
