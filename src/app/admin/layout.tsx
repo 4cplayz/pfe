@@ -12,7 +12,7 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <div className="flex-1 flex">
+      <div className="flex-1 flex ">
         <CustomSidebar>
           {children}
         </CustomSidebar>

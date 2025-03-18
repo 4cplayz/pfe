@@ -46,7 +46,7 @@ export function CustomSidebar({ children }: CustomSidebarProps) {
   ];
 
   return (
-    <div className="flex">
+    <div className="flex w-full ">
       {/* Sidebar */}
       <div className="w-64 bg-background border-r flex flex-col">
         {/* Header */}
