@@ -41,35 +41,49 @@ export async function PATCH(
     const id = params.id;
     const body = await request.json();
     
+    // Log the received data for debugging
+    console.log('Updating journal with ID:', id);
+    console.log('Update payload:', body);
+    
     // Check if journal exists
     const existingJournal = await prisma.journal.findUnique({
       where: { id },
     });
     
     if (!existingJournal) {
+      console.log('Journal not found with ID:', id);
       return NextResponse.json(
         { error: 'Journal not found' },
         { status: 404 }
       );
     }
     
+    // Prepare updated data with better type safety
+    const updateData: any = {};
+    
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.accessLevel !== undefined) updateData.accessLevel = body.accessLevel;
+    if (body.sections !== undefined) updateData.sections = body.sections;
+    if (body.isActive !== undefined) updateData.isActive = body.isActive;
+    
+    console.log('Processed update data:', updateData);
+    
     // Update journal
     const updatedJournal = await prisma.journal.update({
       where: { id },
-      data: {
-        title: body.title !== undefined ? body.title : undefined,
-        description: body.description !== undefined ? body.description : undefined,
-        accessLevel: body.accessLevel !== undefined ? body.accessLevel : undefined,
-        sections: body.sections !== undefined ? body.sections : undefined,
-        isActive: body.isActive !== undefined ? body.isActive : undefined,
-      },
+      data: updateData,
     });
     
+    console.log('Journal updated successfully');
     return NextResponse.json(updatedJournal);
   } catch (error) {
-    console.error('Error updating journal:', error);
+    console.error('Server error updating journal:', error);
     return NextResponse.json(
-      { error: 'Failed to update journal' },
+      { 
+        error: 'Failed to update journal', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

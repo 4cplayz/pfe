@@ -114,6 +114,9 @@ const createJournal = async (journalData: CreateJournalData) => {
     try {
       setError(null);
       
+      console.log('Sending update request for journal ID:', id);
+      console.log('Update data:', JSON.stringify(journalData, null, 2));
+      
       const response = await fetch(`/api/journals/${id}`, {
         method: 'PATCH',
         headers: {
@@ -122,19 +125,33 @@ const createJournal = async (journalData: CreateJournalData) => {
         body: JSON.stringify(journalData),
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update journal');
+      // Get the response text first to handle potential non-JSON responses
+      const responseText = await response.text();
+      let responseData;
+      
+      try {
+        // Try to parse the response as JSON
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', responseText);
+        throw new Error(`Invalid response: ${responseText}`);
       }
       
-      const updatedJournal = await response.json();
+      if (!response.ok) {
+        // Log detailed error information
+        console.error('API error details:', responseData);
+        throw new Error(responseData.error || 'Failed to update journal');
+      }
+      
+      // Update the state with the updated journal
       setJournals((prevJournals) =>
-        prevJournals.map((journal) => (journal.id === id ? updatedJournal : journal))
+        prevJournals.map((journal) => (journal.id === id ? responseData : journal))
       );
       
-      return updatedJournal;
+      return responseData;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
       console.error('Error updating journal:', err);
       throw err;
     }

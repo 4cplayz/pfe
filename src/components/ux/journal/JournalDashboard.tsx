@@ -67,14 +67,29 @@ export function JournalDashboard() {
 
   const handleUpdateJournal = async (journal: Journal) => {
     try {
-      // Convert UI journal to DB format
-      await updateJournal(journal.id, {
+      // Convert UI journal to DB format with proper accessLevel mapping
+      const accessLevel = 
+        journal.permission === "Étudiant" ? "ETUDIANT" :
+        journal.permission === "Professeur" ? "PROFESSEUR" :
+        journal.permission === "Responsable" ? "RESPONSABLE" : 
+        journal.permission; // Fallback to original value
+      
+      const updateData = {
         title: journal.title,
-        description: journal.description,
-        accessLevel: journal.permission as any, // Type cast to match the enum
-        sections: journal.sections,
-      });
-
+        description: journal.description || "",
+        accessLevel, // Use the properly mapped value
+        sections: journal.sections.map(section => ({
+          id: section.id,
+          type: section.type,
+          title: section.title,
+          enabled: section.enabled
+        })),
+      };
+      
+      console.log('Updating journal with formatted data:', updateData);
+      
+      await updateJournal(journal.id, updateData);
+  
       setSelectedJournal(journal);
       setMode('view');
       toast({
