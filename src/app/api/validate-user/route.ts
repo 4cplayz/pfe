@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     if (!matricule) {
       console.log('No matricule provided');
       return NextResponse.json(
-        { error: 'Matricule parameter is required' },
+        { exists: false, error: 'Matricule parameter is required' },
         { status: 400 }
       );
     }
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { matricule },
       select: {
-        id: true,       // Important: incluez l'ID ici
+        id: true,
         name: true,
         matricule: true,
         accessLevel: true,
@@ -34,28 +34,16 @@ export async function GET(request: NextRequest) {
     console.log('Found user:', user);
     
     if (!user) {
-      // Try with a case-insensitive search as fallback
-      const usersWithSimilarMatricule = await prisma.user.findMany({
-        where: {
-          matricule: {
-            contains: matricule,
-            mode: 'insensitive'
-          }
-        }
-      });
-      
-      console.log('Similar matricule users:', usersWithSimilarMatricule);
-      
       return NextResponse.json(
         { exists: false, error: 'User not found' },
         { status: 200 } // We return 200 OK even if user doesn't exist, with exists: false
       );
     }
     
-    // Return user info including the ID
+    // Return user info with exists: true
     return NextResponse.json({
       exists: true,
-      id: user.id,     // Important: retournez l'ID
+      id: user.id,
       name: user.name,
       matricule: user.matricule,
       accessLevel: user.accessLevel,
@@ -64,7 +52,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error validating user:', error);
     return NextResponse.json(
-      { error: 'Failed to validate user', details: error instanceof Error ? error.message : 'Unknown error' },
+      { exists: false, error: 'Failed to validate user', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

@@ -141,16 +141,22 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
       console.log('Données utilisateur reçues:', data);
 
       if (data.exists) {
-        // Mise à jour des données utilisateur avec l'ID
+        // Créez un nouvel objet avec toutes les données nécessaires
         const updatedUserInfo = {
-          ...userInfo,
-          id: data.id // Assurez-vous que cette propriété est bien renvoyée par l'API
+          id: data.id,
+          matricule: data.matricule,
+          name: data.name,
+          accessLevel: data.accessLevel,
+          isActive: data.isActive,
+          token: userInfo?.token || '' // Gardez le token existant
         };
+
         console.log('Mise à jour des infos utilisateur avec ID:', updatedUserInfo);
 
+        // Mettre à jour l'état avec le nouvel objet complet
         setUserInfo(updatedUserInfo);
 
-        // Mise à jour du session storage
+        // Mettre à jour le session storage
         sessionStorage.setItem('currentUser', JSON.stringify(updatedUserInfo));
 
         return data.id;

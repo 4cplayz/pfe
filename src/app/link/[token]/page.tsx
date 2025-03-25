@@ -57,11 +57,9 @@ export default function TokenPage({ params }: TokenPageProps) {
         return;
       }
 
-      // User exists, redirect to journal view
-      console.log(`Student ID ${studentId} verified with token ${token}`);
-      
-      // Save user info to session storage for the journal page
+      // User exists, save ALL user information including ID to session storage
       sessionStorage.setItem('currentUser', JSON.stringify({
+        id: data.id, // Make sure to save the user ID
         matricule: studentId,
         name: data.name,
         accessLevel: data.accessLevel,
