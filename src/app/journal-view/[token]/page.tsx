@@ -183,9 +183,8 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur px-4 py-3 sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="font-semibold">Journal de Bord Numérique</span>
+        <div className="flex items-center space-x-2">
+            <BookOpen size={24} strokeWidth={1.5} className='text-primary'/>
           </div>
           
           <div className="flex items-center gap-4">
