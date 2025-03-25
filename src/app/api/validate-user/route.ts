@@ -19,22 +19,11 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Log all users in the database to debug
-    const allUsers = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        matricule: true,
-      }
-    });
-    
-    console.log('All users in database:', JSON.stringify(allUsers, null, 2));
-    
     // Look up the user in database
     const user = await prisma.user.findUnique({
       where: { matricule },
       select: {
-        id: true,
+        id: true,       // Important: incluez l'ID ici
         name: true,
         matricule: true,
         accessLevel: true,
@@ -63,9 +52,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Return user info (without exposing sensitive data)
+    // Return user info including the ID
     return NextResponse.json({
       exists: true,
+      id: user.id,     // Important: retournez l'ID
       name: user.name,
       matricule: user.matricule,
       accessLevel: user.accessLevel,

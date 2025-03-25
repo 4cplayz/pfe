@@ -9,11 +9,51 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate required fields
-    if (!body.userId || !body.journalId || !body.responses) {
+    console.log('API: Réception de la soumission de journal:', JSON.stringify(body, null, 2));
+    
+    // Validate required fields with better error messages
+    if (!body.userId) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, journalId, and responses are required' },
+        { error: 'ID utilisateur manquant' },
         { status: 400 }
+      );
+    }
+    
+    if (!body.journalId) {
+      return NextResponse.json(
+        { error: 'ID journal manquant' },
+        { status: 400 }
+      );
+    }
+    
+    if (!body.responses || !Array.isArray(body.responses) || body.responses.length === 0) {
+      return NextResponse.json(
+        { error: 'Les réponses du journal sont vides ou mal formatées' },
+        { status: 400 }
+      );
+    }
+    
+    // Verify that the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: body.userId }
+    });
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Utilisateur introuvable' },
+        { status: 404 }
+      );
+    }
+    
+    // Verify that the journal exists
+    const journal = await prisma.journal.findUnique({
+      where: { id: body.journalId }
+    });
+    
+    if (!journal) {
+      return NextResponse.json(
+        { error: 'Journal introuvable' },
+        { status: 404 }
       );
     }
     
@@ -39,6 +79,8 @@ export async function POST(request: NextRequest) {
       },
     });
     
+    console.log('API: Journal créé avec succès:', submission.id);
+    
     // Increment the user's journalsCompleted count
     await prisma.user.update({
       where: { id: body.userId },
@@ -51,7 +93,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(submission, { status: 201 });
   } catch (error) {
-    console.error('Error creating journal submission:', error);
+    console.error('API Error - creating journal submission:', error);
     return NextResponse.json(
       { error: 'Failed to create journal submission', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

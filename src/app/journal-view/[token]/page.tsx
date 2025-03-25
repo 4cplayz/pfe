@@ -55,7 +55,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { submitJournal, loading: submissionLoading, error: submissionError } = useJournalSubmissions();
-  
+
   // Form states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,44 +64,64 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
   const [loadingJournal, setLoadingJournal] = useState(false);
   const [formResponses, setFormResponses] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // For tracking time
   const startTimeRef = useRef<Date>(new Date());
 
   useEffect(() => {
     // Retrieve user info from session storage
     const storedUserInfo = sessionStorage.getItem('currentUser');
-    
+
     if (!storedUserInfo) {
       setError('Session expirée ou non autorisée. Veuillez scanner à nouveau.');
       setLoading(false);
       return;
     }
-    
+
     try {
-      const userInfo = JSON.parse(storedUserInfo) as UserInfo;
-      
+      const parsedUserInfo = JSON.parse(storedUserInfo) as UserInfo;
+
       // Verify the token matches
-      if (userInfo.token !== token) {
+      if (parsedUserInfo.token !== token) {
         setError('Token invalide. Veuillez scanner à nouveau.');
         setLoading(false);
         return;
       }
-      
+
       // Set start time for the journal session
       startTimeRef.current = new Date();
-      
-      setUserInfo(userInfo);
-      setLoading(false);
-      
-      // Fetch the active journal
+
+      setUserInfo(parsedUserInfo);
+
+      // Fetch the active journal first
       fetchActiveJournal();
-      
-      // Fetch the user ID if not present
-      if (!userInfo.id) {
-        fetchUserId(userInfo.matricule);
-      }
+
+      // Ensuite, assurez-vous que l'ID utilisateur est disponible
+      const fetchUserIdAndUpdate = async () => {
+        try {
+          if (!parsedUserInfo.id) {
+            console.log("L'ID utilisateur n'est pas présent dans la session, récupération depuis l'API...");
+            // Si l'ID utilisateur n'est pas présent, récupérez-le
+            const userId = await fetchUserId(parsedUserInfo.matricule);
+
+            if (!userId) {
+              console.error("Impossible de récupérer l'ID utilisateur");
+              setError("Impossible de récupérer les informations utilisateur. Veuillez scanner à nouveau.");
+            }
+          } else {
+            console.log("ID utilisateur déjà présent dans la session:", parsedUserInfo.id);
+          }
+        } catch (err) {
+          console.error("Erreur lors de la récupération de l'ID utilisateur:", err);
+          setError("Une erreur est survenue lors de la récupération des informations utilisateur.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchUserIdAndUpdate();
     } catch (err) {
+      console.error("Erreur lors du parsing des infos utilisateur:", err);
       setError('Une erreur est survenue. Veuillez scanner à nouveau.');
       setLoading(false);
     }
@@ -109,24 +129,38 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
 
   const fetchUserId = async (matricule: string) => {
     try {
+      console.log('Récupération de l\'ID utilisateur pour le matricule:', matricule);
       const response = await fetch(`/api/validate-user?matricule=${matricule}`);
-      
+
       if (!response.ok) {
+        console.error('Erreur API lors de la récupération de l\'ID utilisateur:', response.status);
         throw new Error('Failed to fetch user ID');
       }
-      
+
       const data = await response.json();
-      
-      if (data.exists && data.id) {
-        // Update user info with ID
-        const updatedUserInfo = { ...userInfo, id: data.id };
+      console.log('Données utilisateur reçues:', data);
+
+      if (data.exists) {
+        // Mise à jour des données utilisateur avec l'ID
+        const updatedUserInfo = {
+          ...userInfo,
+          id: data.id // Assurez-vous que cette propriété est bien renvoyée par l'API
+        };
+        console.log('Mise à jour des infos utilisateur avec ID:', updatedUserInfo);
+
         setUserInfo(updatedUserInfo);
-        
-        // Update session storage
+
+        // Mise à jour du session storage
         sessionStorage.setItem('currentUser', JSON.stringify(updatedUserInfo));
+
+        return data.id;
+      } else {
+        console.error('Utilisateur non trouvé pour ce matricule');
+        throw new Error('User not found');
       }
     } catch (err) {
-      console.error('Error fetching user ID:', err);
+      console.error('Erreur lors de la récupération de l\'ID utilisateur:', err);
+      return null;
     }
   };
 
@@ -134,36 +168,46 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
     try {
       setLoadingJournal(true);
       const response = await fetch('/api/journals/active');
-      
+
       if (!response.ok) {
         throw new Error('Erreur lors de la récupération du journal actif');
       }
-      
+
       const data = await response.json();
       console.log('Active journal:', data);
-      
+
       if (!data) {
         // No active journal found
         return;
       }
-      
+
       setActiveJournal(data);
-      
+
       // Initialize form responses with empty values for each section
       if (data.sections) {
         const initialResponses: Record<string, any> = {};
-        
+
+        console.log("Initialisation des réponses du formulaire pour les sections:", data.sections);
+
         data.sections.forEach((section: JournalSection) => {
           if (section.enabled) {
+            console.log(`Initialisation de la section ${section.id} (${section.title}) de type ${section.type}`);
+
             if (section.type === SectionType.VERIFICATION) {
+              // Pour les sections de vérification, initialiser les deux cases à cocher
               initialResponses[`${section.id}-ouverture`] = false;
               initialResponses[`${section.id}-fermeture`] = false;
+
+              console.log(`- Champs 'ouverture' et 'fermeture' initialisés à false`);
             } else {
+              // Pour les autres types de sections avec champ texte
               initialResponses[section.id] = '';
+              console.log(`- Champ de texte initialisé à une chaîne vide`);
             }
           }
         });
-        
+
+        console.log("État initial du formulaire:", initialResponses);
         setFormResponses(initialResponses);
       }
     } catch (err) {
@@ -193,20 +237,45 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
   };
 
   const handleSubmitJournal = async () => {
-    if (!userInfo?.id || !activeJournal) {
+    // Validation préliminaire avec logs détaillés pour le débogage
+    console.log("Tentative de soumission du journal...");
+    console.log("Informations utilisateur:", userInfo);
+    console.log("Journal actif:", activeJournal);
+
+    // Si l'ID utilisateur n'est pas disponible, essayez de le récupérer une dernière fois
+    if (!userInfo?.id && userInfo?.matricule) {
+      console.log("L'ID utilisateur est manquant, tentative de récupération...");
+      const userId = await fetchUserId(userInfo.matricule);
+      if (!userId) {
+        console.error("Échec de la dernière tentative de récupération de l'ID utilisateur");
+      }
+    }
+
+    if (!userInfo?.id) {
+      console.error("ID utilisateur manquant pour la soumission");
       toast({
         title: "Erreur",
-        description: "Impossible de soumettre le journal: informations utilisateur ou journal manquantes.",
+        description: "ID utilisateur manquant. Veuillez rafraîchir la page et réessayer.",
         variant: "destructive"
       });
       return;
     }
-    
+
+    if (!activeJournal) {
+      console.error("Journal actif manquant pour la soumission");
+      toast({
+        title: "Erreur",
+        description: "Journal actif manquant. Veuillez rafraîchir la page et réessayer.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      
+
       // Format responses for submission
-      const sectionResponses: SectionResponse[] = activeJournal.sections
+      const sectionResponses = activeJournal.sections
         .filter(section => section.enabled)
         .map(section => {
           if (section.type === SectionType.VERIFICATION) {
@@ -228,27 +297,27 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
             };
           }
         });
-      
+
       // Create submission data
-      const submissionData: CreateJournalSubmission = {
-        userId: userInfo.id,
+      const submissionData = {
+        userId: userInfo.id, // Assurez-vous que ceci est une chaîne valide
         journalId: activeJournal.id,
         responses: sectionResponses,
         startTime: startTimeRef.current,
         endTime: new Date()
       };
-      
-      console.log('Submitting journal with data:', submissionData);
-      
+
+      console.log('Soumission du journal avec données:', JSON.stringify(submissionData, null, 2));
+
       // Submit the journal
       const result = await submitJournal(submissionData);
-      
+
       if (result) {
         toast({
           title: "Journal soumis avec succès",
           description: "Votre soumission a été enregistrée."
         });
-        
+
         // Redirect to a success page or back to home after a brief delay
         setTimeout(() => {
           router.push('/');
@@ -260,7 +329,8 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
       console.error('Error submitting journal:', err);
       toast({
         title: "Erreur",
-        description: "Une erreur s'est produite lors de la soumission du journal.",
+        description: "Une erreur s'est produite lors de la soumission du journal: " +
+          (err instanceof Error ? err.message : "Erreur inconnue"),
         variant: "destructive"
       });
     } finally {
@@ -273,7 +343,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
     sessionStorage.removeItem('currentUser');
     router.push('/');
   };
-  
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('fr-CA', {
@@ -294,21 +364,21 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
       minute: '2-digit'
     }).format(now);
   };
-  
+
   // Check if user has sufficient permissions to edit the journal
   const hasEditPermission = () => {
     if (!userInfo || !activeJournal) return false;
-    
+
     // Get numeric access levels for comparison
     const accessLevelMap = {
       'ETUDIANT': 1,
       'PROFESSEUR': 2,
       'RESPONSABLE': 3
     };
-    
+
     const userLevel = accessLevelMap[userInfo.accessLevel as keyof typeof accessLevelMap] || 0;
     const journalLevel = accessLevelMap[activeJournal.accessLevel as keyof typeof accessLevelMap] || 0;
-    
+
     // User can edit if their access level is greater than or equal to the journal's required level
     return userLevel >= journalLevel;
   };
@@ -339,10 +409,10 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur px-4 py-3 sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-            <BookOpen size={24} strokeWidth={1.5} className='text-primary'/>
+          <div className="flex items-center space-x-2">
+            <BookOpen size={24} strokeWidth={1.5} className='text-primary' />
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
@@ -385,7 +455,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                 </div>
               </div>
             </CardHeader>
-            
+
             <CardContent className="space-y-6 pt-6">
               {/* Journal Header */}
               <div className="space-y-4">
@@ -444,22 +514,22 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                           {section.type === SectionType.VERIFICATION && (
                             <div className="grid grid-cols-2 gap-4">
                               <div className="flex items-start space-x-2">
-                                <Checkbox 
-                                  id={`ouverture-${section.id}`} 
-                                  disabled={!hasEditPermission()} 
+                                <Checkbox
+                                  id={`ouverture-${section.id}`}
+                                  disabled={!hasEditPermission()}
                                   checked={!!formResponses[`${section.id}-ouverture`]}
-                                  onCheckedChange={(checked) => 
+                                  onCheckedChange={(checked) =>
                                     handleInputChange(section.id, checked === true, 'ouverture')
                                   }
                                 />
                                 <Label htmlFor={`ouverture-${section.id}`}>Ouverture alimentée</Label>
                               </div>
                               <div className="flex items-start space-x-2">
-                                <Checkbox 
-                                  id={`fermeture-${section.id}`} 
-                                  disabled={!hasEditPermission()} 
+                                <Checkbox
+                                  id={`fermeture-${section.id}`}
+                                  disabled={!hasEditPermission()}
                                   checked={!!formResponses[`${section.id}-fermeture`]}
-                                  onCheckedChange={(checked) => 
+                                  onCheckedChange={(checked) =>
                                     handleInputChange(section.id, checked === true, 'fermeture')
                                   }
                                 />
@@ -541,15 +611,15 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                   </div>
                 )}
                 <div className="flex-1 flex justify-end gap-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={handleLogout}
                   >
                     Annuler
                   </Button>
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     disabled={!hasEditPermission() || isSubmitting}
                     title={!hasEditPermission() ? "Niveau d'accès insuffisant" : ""}
                     onClick={handleSubmitJournal}
