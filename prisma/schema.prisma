@@ -19,6 +19,17 @@ model User {
   updatedAt         DateTime     @default(now()) @updatedAt
 }
 
+model Journal {
+  id           String      @id @default(uuid())
+  title        String
+  description  String?
+  accessLevel  AccessLevel @default(ETUDIANT)
+  sections     Json        // Store the sections configuration as JSON
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+}
+
 enum AccessLevel {
   ETUDIANT
   PROFESSEUR
