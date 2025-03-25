@@ -1,6 +1,7 @@
+// src/app/journal-view/[token]/page.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2, BookOpen, User, CheckCircle, CalendarIcon, LockIcon, Layers } from 'lucide-react';
@@ -12,6 +13,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import { useJournalSubmissions } from '@/hooks/use-journal-submissions';
+import { CreateJournalSubmission, SectionResponse } from '@/types/journal-submission';
 
 interface JournalViewPageProps {
   params: Promise<{
@@ -24,6 +28,7 @@ type UserInfo = {
   name: string;
   accessLevel: string;
   token: string;
+  id?: string; // Add user ID
 };
 
 type JournalSection = {
@@ -48,12 +53,20 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
   // Unwrap the params Promise using React.use()
   const { token } = React.use(params);
   const router = useRouter();
+  const { toast } = useToast();
+  const { submitJournal, loading: submissionLoading, error: submissionError } = useJournalSubmissions();
   
+  // Form states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [activeJournal, setActiveJournal] = useState<ActiveJournal | null>(null);
   const [loadingJournal, setLoadingJournal] = useState(false);
+  const [formResponses, setFormResponses] = useState<Record<string, any>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // For tracking time
+  const startTimeRef = useRef<Date>(new Date());
 
   useEffect(() => {
     // Retrieve user info from session storage
@@ -75,16 +88,47 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
         return;
       }
       
+      // Set start time for the journal session
+      startTimeRef.current = new Date();
+      
       setUserInfo(userInfo);
       setLoading(false);
       
       // Fetch the active journal
       fetchActiveJournal();
+      
+      // Fetch the user ID if not present
+      if (!userInfo.id) {
+        fetchUserId(userInfo.matricule);
+      }
     } catch (err) {
       setError('Une erreur est survenue. Veuillez scanner à nouveau.');
       setLoading(false);
     }
   }, [token]);
+
+  const fetchUserId = async (matricule: string) => {
+    try {
+      const response = await fetch(`/api/validate-user?matricule=${matricule}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user ID');
+      }
+      
+      const data = await response.json();
+      
+      if (data.exists && data.id) {
+        // Update user info with ID
+        const updatedUserInfo = { ...userInfo, id: data.id };
+        setUserInfo(updatedUserInfo);
+        
+        // Update session storage
+        sessionStorage.setItem('currentUser', JSON.stringify(updatedUserInfo));
+      }
+    } catch (err) {
+      console.error('Error fetching user ID:', err);
+    }
+  };
 
   const fetchActiveJournal = async () => {
     try {
@@ -104,11 +148,123 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
       }
       
       setActiveJournal(data);
+      
+      // Initialize form responses with empty values for each section
+      if (data.sections) {
+        const initialResponses: Record<string, any> = {};
+        
+        data.sections.forEach((section: JournalSection) => {
+          if (section.enabled) {
+            if (section.type === SectionType.VERIFICATION) {
+              initialResponses[`${section.id}-ouverture`] = false;
+              initialResponses[`${section.id}-fermeture`] = false;
+            } else {
+              initialResponses[section.id] = '';
+            }
+          }
+        });
+        
+        setFormResponses(initialResponses);
+      }
     } catch (err) {
       console.error('Error fetching active journal:', err);
       setError('Impossible de charger le journal actif.');
     } finally {
       setLoadingJournal(false);
+    }
+  };
+
+  const handleInputChange = (sectionId: string, value: string | boolean, subField?: string) => {
+    setFormResponses(prev => {
+      if (subField) {
+        // For checkbox fields like verification sections
+        return {
+          ...prev,
+          [`${sectionId}-${subField}`]: value
+        };
+      } else {
+        // For text fields
+        return {
+          ...prev,
+          [sectionId]: value
+        };
+      }
+    });
+  };
+
+  const handleSubmitJournal = async () => {
+    if (!userInfo?.id || !activeJournal) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de soumettre le journal: informations utilisateur ou journal manquantes.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Format responses for submission
+      const sectionResponses: SectionResponse[] = activeJournal.sections
+        .filter(section => section.enabled)
+        .map(section => {
+          if (section.type === SectionType.VERIFICATION) {
+            return {
+              sectionId: section.id,
+              type: section.type as SectionType,
+              title: section.title,
+              checkboxes: {
+                ouverture: !!formResponses[`${section.id}-ouverture`],
+                fermeture: !!formResponses[`${section.id}-fermeture`]
+              }
+            };
+          } else {
+            return {
+              sectionId: section.id,
+              type: section.type as SectionType,
+              title: section.title,
+              content: formResponses[section.id] || ''
+            };
+          }
+        });
+      
+      // Create submission data
+      const submissionData: CreateJournalSubmission = {
+        userId: userInfo.id,
+        journalId: activeJournal.id,
+        responses: sectionResponses,
+        startTime: startTimeRef.current,
+        endTime: new Date()
+      };
+      
+      console.log('Submitting journal with data:', submissionData);
+      
+      // Submit the journal
+      const result = await submitJournal(submissionData);
+      
+      if (result) {
+        toast({
+          title: "Journal soumis avec succès",
+          description: "Votre soumission a été enregistrée."
+        });
+        
+        // Redirect to a success page or back to home after a brief delay
+        setTimeout(() => {
+          router.push('/');
+        }, 2000);
+      } else {
+        throw new Error("La soumission a échoué");
+      }
+    } catch (err) {
+      console.error('Error submitting journal:', err);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la soumission du journal.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -291,6 +447,10 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                                 <Checkbox 
                                   id={`ouverture-${section.id}`} 
                                   disabled={!hasEditPermission()} 
+                                  checked={!!formResponses[`${section.id}-ouverture`]}
+                                  onCheckedChange={(checked) => 
+                                    handleInputChange(section.id, checked === true, 'ouverture')
+                                  }
                                 />
                                 <Label htmlFor={`ouverture-${section.id}`}>Ouverture alimentée</Label>
                               </div>
@@ -298,6 +458,10 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                                 <Checkbox 
                                   id={`fermeture-${section.id}`} 
                                   disabled={!hasEditPermission()} 
+                                  checked={!!formResponses[`${section.id}-fermeture`]}
+                                  onCheckedChange={(checked) => 
+                                    handleInputChange(section.id, checked === true, 'fermeture')
+                                  }
                                 />
                                 <Label htmlFor={`fermeture-${section.id}`}>Fermeture alimentation</Label>
                               </div>
@@ -312,6 +476,8 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                                 placeholder={hasEditPermission() ? "Description du matériel utilisé" : "Vous n'avez pas les droits d'accès pour modifier ce champ"}
                                 readOnly={!hasEditPermission()}
                                 className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed" : ""}
+                                value={formResponses[section.id] || ''}
+                                onChange={(e) => handleInputChange(section.id, e.target.value)}
                               />
                             </div>
                           )}
@@ -325,6 +491,8 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                                 rows={4}
                                 readOnly={!hasEditPermission()}
                                 className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed" : ""}
+                                value={formResponses[section.id] || ''}
+                                onChange={(e) => handleInputChange(section.id, e.target.value)}
                               />
                             </div>
                           )}
@@ -337,6 +505,8 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                                 placeholder={hasEditPermission() ? "Entrez vos commentaires supplémentaires" : "Vous n'avez pas les droits d'accès pour modifier ce champ"}
                                 readOnly={!hasEditPermission()}
                                 className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed" : ""}
+                                value={formResponses[section.id] || ''}
+                                onChange={(e) => handleInputChange(section.id, e.target.value)}
                               />
                             </div>
                           )}
@@ -356,7 +526,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">Temps de fin</Label>
-                  <Input placeholder="Sera rempli automatiquement" disabled />
+                  <Input value={getCurrentDateTime().split(',')[1]?.trim()} readOnly />
                 </div>
                 <div></div>
               </div>
@@ -371,15 +541,25 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                   </div>
                 )}
                 <div className="flex-1 flex justify-end gap-4">
-                  <Button type="button" variant="outline">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleLogout}
+                  >
                     Annuler
                   </Button>
                   <Button 
                     type="button" 
-                    disabled={!hasEditPermission()}
+                    disabled={!hasEditPermission() || isSubmitting}
                     title={!hasEditPermission() ? "Niveau d'accès insuffisant" : ""}
+                    onClick={handleSubmitJournal}
                   >
-                    Soumettre le journal
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Soumission...
+                      </>
+                    ) : "Soumettre le journal"}
                   </Button>
                 </div>
               </div>

@@ -9,29 +9,58 @@ datasource db {
 }
 
 model User {
-  id                String       @id @default(uuid())
+  id                String             @id @default(uuid())
   name              String
-  matricule         String       @unique
-  accessLevel       AccessLevel  @default(ETUDIANT)
-  journalsCompleted Int          @default(0)
-  isActive          Boolean      @default(false)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @default(now()) @updatedAt
+  matricule         String             @unique
+  accessLevel       AccessLevel        @default(ETUDIANT)
+  journalsCompleted Int                @default(0)
+  isActive          Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now()) @updatedAt
+  // Add relation to journal submissions
+  submissions       JournalSubmission[]
 }
 
 model Journal {
-  id           String      @id @default(uuid())
+  id           String              @id @default(uuid())
   title        String
   description  String?
-  accessLevel  AccessLevel @default(ETUDIANT)
-  sections     Json        // Store the sections configuration as JSON
-  isActive     Boolean     @default(false)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @default(now()) @updatedAt
+  accessLevel  AccessLevel         @default(ETUDIANT)
+  sections     Json                // Store the sections configuration as JSON
+  isActive     Boolean             @default(false)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @default(now()) @updatedAt
+  // Add relation to journal submissions
+  submissions  JournalSubmission[]
+}
+
+// New model for journal submissions
+model JournalSubmission {
+  id            String     @id @default(uuid())
+  userId        String
+  journalId     String
+  responses     Json       // Store all responses as JSON
+  startTime     DateTime   @default(now())
+  endTime       DateTime   @default(now())
+  totalTime     Int?       // Total time in seconds (optional)
+  status        SubmissionStatus @default(SUBMITTED)
+  feedback      String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now()) @updatedAt
+  
+  // Relations
+  user          User       @relation(fields: [userId], references: [id])
+  journal       Journal    @relation(fields: [journalId], references: [id])
 }
 
 enum AccessLevel {
   ETUDIANT
   PROFESSEUR
   RESPONSABLE
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
 }
