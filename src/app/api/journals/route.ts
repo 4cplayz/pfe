@@ -44,21 +44,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    if (!body.title || !body.sections) {
+    if (!body.title) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing title field' },
         { status: 400 }
       );
     }
     
-    // Create new journal
+    // Prepare sections data - ensure it's in the correct format
+    const sections = Array.isArray(body.sections) ? body.sections : [];
+    
+    // Create new journal with proper type conversion
     const newJournal = await prisma.journal.create({
       data: {
         title: body.title,
-        description: body.description,
+        description: body.description || '',
         accessLevel: body.accessLevel || 'ETUDIANT',
-        sections: body.sections,
-        isActive: true,
+        sections: sections, // This will be stored as JSON
+        isActive: true
       },
     });
     
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating journal:', error);
     return NextResponse.json(
-      { error: 'Failed to create journal' },
+      { error: 'Failed to create journal', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

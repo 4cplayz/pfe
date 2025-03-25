@@ -1,4 +1,6 @@
-import { AccessLevel } from './journal';
+// src/types/journal-db.ts
+// Define the proper AccessLevel type to match Prisma schema
+export type AccessLevel = 'ETUDIANT' | 'PROFESSEUR' | 'RESPONSABLE';
 
 // Define the structure for a section in the journal
 export interface JournalSectionData {

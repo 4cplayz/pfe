@@ -31,7 +31,7 @@ export function JournalDashboard() {
   const [newJournal, setNewJournal] = useState<Journal>({ ...EMPTY_JOURNAL });
   const [mode, setMode] = useState<'view' | 'create' | 'edit'>('view');
   const { toast } = useToast();
-  
+
   // Use our custom hook for journal operations
   const {
     journals: dbJournals,
@@ -42,7 +42,7 @@ export function JournalDashboard() {
     updateJournal,
     deleteJournal
   } = useJournals();
-  
+
   // Convert DB journals to our UI format
   const journals = dbJournals.map(journal => ({
     id: journal.id,
@@ -74,7 +74,7 @@ export function JournalDashboard() {
         accessLevel: journal.permission as any, // Type cast to match the enum
         sections: journal.sections,
       });
-      
+
       setSelectedJournal(journal);
       setMode('view');
       toast({
@@ -95,11 +95,11 @@ export function JournalDashboard() {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce journal?")) {
       try {
         await deleteJournal(id);
-        
+
         if (selectedJournal?.id === id) {
           setSelectedJournal(null);
         }
-        
+
         toast({
           title: "Journal supprimé",
           description: "Le journal a été supprimé avec succès.",
@@ -120,13 +120,23 @@ export function JournalDashboard() {
       // Convert UI journal to DB format for creation
       const journalData: CreateJournalData = {
         title: newJournal.title,
-        description: newJournal.description,
-        accessLevel: newJournal.permission as any, // Type cast to match the enum
-        sections: newJournal.sections,
+        description: newJournal.description || "",
+        // Convert permission string to AccessLevel enum used in the database
+        accessLevel: (newJournal.permission === "Étudiant" ? "ETUDIANT" :
+          newJournal.permission === "Professeur" ? "PROFESSEUR" :
+            newJournal.permission === "Responsable" ? "RESPONSABLE" :
+              "ETUDIANT") as AccessLevel,
+        // Make sure sections are properly formatted for JSON storage
+        sections: newJournal.sections.map(section => ({
+          id: section.id,
+          type: section.type,
+          title: section.title,
+          enabled: section.enabled
+        })),
       };
-      
+
       const createdJournal = await createJournal(journalData);
-      
+
       // Convert the created journal back to UI format
       const uiJournal: Journal = {
         id: createdJournal.id,
@@ -137,10 +147,10 @@ export function JournalDashboard() {
         createdAt: new Date(createdJournal.createdAt),
         updatedAt: new Date(createdJournal.updatedAt)
       };
-      
+
       setSelectedJournal(uiJournal);
       setMode('view');
-      
+
       toast({
         title: "Journal créé",
         description: "Le journal a été créé avec succès.",

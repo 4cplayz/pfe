@@ -65,34 +65,48 @@ export function useJournals() {
   };
 
   // Create a new journal
-  const createJournal = async (journalData: CreateJournalData) => {
-    try {
-      setError(null);
-      
-      const response = await fetch('/api/journals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(journalData),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create journal');
-      }
-      
-      const newJournal = await response.json();
-      setJournals((prevJournals) => [newJournal, ...prevJournals]);
-      
-      return newJournal;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error creating journal:', err);
-      throw err;
-    }
-  };
+// In src/hooks/use-journals.ts
 
+// Create a new journal with enhanced error logging
+const createJournal = async (journalData: CreateJournalData) => {
+  try {
+    console.log('Attempting to create journal with data:', JSON.stringify(journalData, null, 2));
+    
+    setError(null);
+    
+    const response = await fetch('/api/journals', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(journalData),
+    });
+    
+    // Capture the response body for better error analysis
+    const responseText = await response.text();
+    let responseData;
+    
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', responseText);
+      responseData = { error: 'Invalid JSON response', rawResponse: responseText };
+    }
+    
+    if (!response.ok) {
+      console.error('API error details:', responseData);
+      throw new Error(responseData.error || 'Failed to create journal');
+    }
+    
+    setUsers((prevJournals) => [responseData, ...prevJournals]);
+    
+    return responseData;
+  } catch (err) {
+    console.error('Error creating journal:', err);
+    setError(err instanceof Error ? err.message : 'An error occurred');
+    throw err;
+  }
+};
   // Update an existing journal
   const updateJournal = async (id: string, journalData: UpdateJournalData) => {
     try {
