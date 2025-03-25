@@ -245,6 +245,8 @@ export default function StatisticsPage() {
                           fill="#8884d8"
                           dataKey="count"
                           nameKey="status"
+                          stroke="var(--color-background)" // Use theme background color for stroke
+                          strokeWidth={2} // Adjust stroke width as needed
                         >
                           {stats.submissionsByStatus.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -285,6 +287,8 @@ export default function StatisticsPage() {
                           fill="#8884d8"
                           dataKey="count"
                           nameKey="accessLevel"
+                          stroke="var(--color-background)" // Use theme background color for stroke
+                          strokeWidth={2} // Adjust stroke width as needed
                           label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
                           {stats.usersByAccessLevel.map((entry, index) => (
