@@ -1,26 +1,18 @@
-"use client";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+// src/components/ux/stats/skeleton-loading.tsx
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function StatsSkeletonLoading() {
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* Summary Cards Skeleton */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Card key={`summary-${index}`}>
             <CardContent className="flex flex-row items-center justify-between py-6">
-              <div className="flex flex-col gap-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-8 w-16" />
+              <div className="flex flex-col space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-16" />
               </div>
               <Skeleton className="h-12 w-12 rounded-full" />
             </CardContent>
@@ -28,45 +20,30 @@ export function StatsSkeletonLoading() {
         ))}
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="submissions">Soumissions</TabsTrigger>
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-        </TabsList>
+      {/* Charts Skeleton */}
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-64 mt-1" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[400px] w-full rounded-lg" />
+        </CardContent>
+      </Card>
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {/* Skeleton for charts */}
-            {[1, 2].map((i) => (
-              <Card key={i} className="min-h-[400px]">
-                <CardHeader>
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-64" />
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                  <Skeleton className="h-[300px] w-full rounded-xl" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {[1, 2].map((i) => (
-              <Card key={i} className="min-h-[400px]">
-                <CardHeader>
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-64" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-[300px] w-full rounded-xl" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <Card key={`chart-${index}`}>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-56 mt-1" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[300px] w-full rounded-lg" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,201 +1,297 @@
+// src/app/api/statistics/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { generateMockStatistics } from './mock-data';
 
 const prisma = new PrismaClient();
 
-// Helper function to format dates consistently
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
-// Generate dates for the past N days
-function generateDatesForPastDays(days: number): { date: string; count: number }[] {
-  const dates = [];
-  const today = new Date();
-  
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(today.getDate() - i);
-    dates.push({
-      date: formatDate(date),
-      count: 0
-    });
-  }
-  
-  return dates;
-}
-
 export async function GET(request: NextRequest) {
   try {
-    // Get the number of days from query parameters (default to 30)
+    // Get days parameter from query string
     const daysParam = request.nextUrl.searchParams.get('days') || '30';
-    const days = daysParam === 'all' ? 365 : parseInt(daysParam, 10);
+    let daysFilter: number | null = parseInt(daysParam);
     
-    if (isNaN(days) || days <= 0) {
-      return NextResponse.json(
-        { error: 'Invalid days parameter' },
-        { status: 400 }
-      );
+    // If 'all' is specified, set daysFilter to null to get all data
+    if (daysParam === 'all') {
+      daysFilter = null;
     }
     
-    // Calculate the start date for our query
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    // Calculate date range
+    const dateFilter = daysFilter ? new Date(Date.now() - daysFilter * 24 * 60 * 60 * 1000) : null;
     
-    // 1. Get submissions statistics
-    // Check if we have any data at all
-    const totalSubmissionsCount = await prisma.journalSubmission.count();
-    
-    // If no real data exists, return mock data
-    if (totalSubmissionsCount === 0) {
-      console.log('No real data found, returning mock statistics');
-      return NextResponse.json(generateMockStatistics(days));
-    }
-    
-    const submissionsByStatus = await prisma.journalSubmission.groupBy({
-      by: ['status'],
-      _count: {
-        id: true
-      }
-    });
-    
-    // 2. Get submissions by day
-    const submissionsByDay = await prisma.journalSubmission.findMany({
-      where: {
-        createdAt: {
-          gte: startDate
-        }
-      },
-      select: {
-        createdAt: true
-      }
-    });
-    
-    // Process submissions by day
-    const dailySubmissionCounts = generateDatesForPastDays(days);
-    
-    // Fill in actual counts
-    submissionsByDay.forEach(submission => {
-      const dateStr = formatDate(submission.createdAt);
-      const dateEntry = dailySubmissionCounts.find(d => d.date === dateStr);
-      if (dateEntry) {
-        dateEntry.count += 1;
-      }
-    });
-    
-    // 3. Get average completion time by journal
-    const journals = await prisma.journal.findMany({
-      select: {
-        id: true,
-        title: true,
-        submissions: {
-          select: {
-            totalTime: true
-          }
-        }
-      }
-    });
-    
-    const averageCompletionTimeByJournal = journals
-      .map(journal => {
-        const validTimes = journal.submissions
-          .filter(sub => sub.totalTime !== null && sub.totalTime > 0)
-          .map(sub => sub.totalTime as number);
-        
-        const average = validTimes.length > 0
-          ? validTimes.reduce((sum, time) => sum + time, 0) / validTimes.length
-          : 0;
-        
-        return {
-          journalTitle: journal.title,
-          averageTime: Math.round(average)
-        };
-      })
-      .filter(item => item.averageTime > 0)
-      .sort((a, b) => b.averageTime - a.averageTime)
-      .slice(0, 6); // Limit to top 6 journals
-    
-    // 4. Get users by access level
-    const usersByAccessLevel = await prisma.user.groupBy({
-      by: ['accessLevel'],
-      _count: {
-        id: true
-      }
-    });
-    
-    // 5. Get various counts
+    // === Basic Stats ===
     const totalUsers = await prisma.user.count();
-    const totalSubmissions = await prisma.journalSubmission.count();
-    const activeJournals = await prisma.journal.count({
-      where: {
-        isActive: true
-      }
+    const totalSubmissions = await prisma.journalSubmission.count({
+      where: dateFilter ? { createdAt: { gte: dateFilter } } : undefined
+    });
+    const activeJournals = await prisma.journal.count({ where: { isActive: true } });
+    
+    // === Submissions by Status ===
+    const submissionStatusCount = await prisma.journalSubmission.groupBy({
+      by: ['status'],
+      _count: { id: true },
+      where: dateFilter ? { createdAt: { gte: dateFilter } } : undefined
     });
     
-    // 6. Calculate overall average completion time
-    const completionTimes = await prisma.journalSubmission.findMany({
-      where: {
-        totalTime: {
-          not: null
+    const statusColors = {
+      SUBMITTED: "#fbbf24", 
+      REVIEWED: "#10b981", 
+      DRAFT: "#6b7280", 
+    };
+    
+    const submissionsByStatus = submissionStatusCount.map(item => ({
+      status: item.status,
+      count: item._count.id,
+      color: statusColors[item.status as keyof typeof statusColors] || "#6b7280"
+    }));
+    
+    // === Users by Access Level ===
+    const userAccessLevelCount = await prisma.user.groupBy({
+      by: ['accessLevel'],
+      _count: { id: true }
+    });
+    
+    const accessLevelColors = {
+      ETUDIANT: "#60a5fa",
+      PROFESSEUR: "#8b5cf6", 
+      RESPONSABLE: "#ec4899",
+    };
+    
+    const usersByAccessLevel = userAccessLevelCount.map(item => ({
+      accessLevel: item.accessLevel,
+      count: item._count.id,
+      color: accessLevelColors[item.accessLevel as keyof typeof accessLevelColors] || "#6b7280"
+    }));
+    
+    // === Submissions by Day ===
+    const submissionsByDay = [];
+    
+    if (daysFilter) {
+      for (let i = 0; i < daysFilter; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (daysFilter - 1 - i));
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Count submissions for this day
+        const count = await prisma.journalSubmission.count({
+          where: {
+            createdAt: {
+              gte: new Date(date.setHours(0, 0, 0, 0)),
+              lt: new Date(date.setHours(23, 59, 59, 999))
+            }
+          }
+        });
+        
+        submissionsByDay.push({ date: dateStr, count });
+      }
+    } else {
+      // For "all" option, group by month
+      const monthlyData = await prisma.$queryRaw`
+        SELECT DATE_TRUNC('month', "createdAt")::date as month, COUNT(*) as count
+        FROM "JournalSubmission"
+        GROUP BY DATE_TRUNC('month', "createdAt")
+        ORDER BY month ASC
+      `;
+      
+      for (const row of monthlyData as any[]) {
+        submissionsByDay.push({
+          date: row.month.toISOString().split('T')[0],
+          count: Number(row.count)
+        });
+      }
+    }
+    
+    // === Daily Status Breakdown ===
+    const statusByDay = [];
+    
+    if (daysFilter) {
+      for (let i = 0; i < Math.min(daysFilter, 30); i++) { // Limit to 30 days for performance
+        const date = new Date();
+        date.setDate(date.getDate() - (Math.min(daysFilter, 30) - 1 - i));
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const submitted = await prisma.journalSubmission.count({
+          where: {
+            status: 'SUBMITTED',
+            createdAt: {
+              gte: new Date(date.setHours(0, 0, 0, 0)),
+              lt: new Date(date.setHours(23, 59, 59, 999))
+            }
+          }
+        });
+        
+        const reviewed = await prisma.journalSubmission.count({
+          where: {
+            status: 'REVIEWED',
+            createdAt: {
+              gte: new Date(date.setHours(0, 0, 0, 0)),
+              lt: new Date(date.setHours(23, 59, 59, 999))
+            }
+          }
+        });
+        
+        const draft = await prisma.journalSubmission.count({
+          where: {
+            status: 'DRAFT',
+            createdAt: {
+              gte: new Date(date.setHours(0, 0, 0, 0)),
+              lt: new Date(date.setHours(23, 59, 59, 999))
+            }
+          }
+        });
+        
+        statusByDay.push({ 
+          date: dateStr, 
+          submitted,
+          reviewed,
+          draft
+        });
+      }
+    }
+    
+    // === Completion Time Distribution ===
+    const timeRanges = [
+      { range: "< 1m", min: 0, max: 60 },
+      { range: "1-2m", min: 60, max: 120 },
+      { range: "2-5m", min: 120, max: 300 },
+      { range: "5-10m", min: 300, max: 600 },
+      { range: "10-15m", min: 600, max: 900 },
+      { range: "> 15m", min: 900, max: null }
+    ];
+    
+    const completionTimeDistribution = [];
+    
+    for (const range of timeRanges) {
+      const count = await prisma.journalSubmission.count({
+        where: {
+          totalTime: {
+            gte: range.min,
+            ...(range.max ? { lt: range.max } : {})
+          },
+          ...(dateFilter ? { createdAt: { gte: dateFilter } } : {})
         }
-      },
-      select: {
-        totalTime: true
-      }
+      });
+      
+      completionTimeDistribution.push({ range: range.range, count });
+    }
+    
+    // === Most Active Users ===
+    const activeUsers = await prisma.journalSubmission.groupBy({
+      by: ['userId'],
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 7,
+      where: dateFilter ? { createdAt: { gte: dateFilter } } : undefined
     });
     
-    const validTimes = completionTimes
-      .filter(sub => sub.totalTime !== null && sub.totalTime > 0)
-      .map(sub => sub.totalTime as number);
+    const userIds = activeUsers.map(u => u.userId);
+    const userDetails = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, matricule: true }
+    });
     
-    const averageCompletionTimeAll = validTimes.length > 0
-      ? Math.round(validTimes.reduce((sum, time) => sum + time, 0) / validTimes.length)
-      : 0;
-
-    // Status colors matching those in the stats page
-    const STATUS_COLORS = {
-      SUBMITTED: "#fbbf24", // yellow-500
-      REVIEWED: "#10b981", // green-500
-      DRAFT: "#6b7280", // gray-500
-    };
-
-    // Access level colors
-    const ACCESS_LEVEL_COLORS = {
-      ETUDIANT: "#60a5fa", // blue-400
-      PROFESSEUR: "#8b5cf6", // violet-500
-      RESPONSABLE: "#ec4899", // pink-500
-    };
+    const userMap = userDetails.reduce((acc, user) => {
+      acc[user.id] = user;
+      return acc;
+    }, {} as Record<string, any>);
     
-    // Format data for the frontend
-    const formattedData = {
-      submissionsByStatus: submissionsByStatus.map(item => ({
-        status: item.status,
-        count: item._count.id,
-        color: STATUS_COLORS[item.status as keyof typeof STATUS_COLORS] || "#6b7280"
-      })),
+    const mostActiveUsers = activeUsers.map(user => ({
+      name: userMap[user.userId]?.name || 'Unknown',
+      matricule: userMap[user.userId]?.matricule || '',
+      submissions: user._count.id
+    }));
+    
+    // === User Growth Over Time ===
+    const userGrowthData = [];
+    
+    if (daysFilter) {
+      for (let i = 0; i < daysFilter; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (daysFilter - 1 - i));
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Count users registered up to this date
+        const users = await prisma.user.count({
+          where: {
+            createdAt: {
+              lte: new Date(date.setHours(23, 59, 59, 999))
+            }
+          }
+        });
+        
+        userGrowthData.push({ date: dateStr, users });
+      }
+    } else {
+      // For "all" option, group by month
+      const monthlyUsers = await prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('month', date)::date as month,
+          COUNT(*) 
+        FROM (
+          SELECT DISTINCT ON (u.id) u.id, u."createdAt" as date
+          FROM "User" u
+          ORDER BY u.id, u."createdAt"
+        ) as user_dates
+        GROUP BY DATE_TRUNC('month', date)
+        ORDER BY month ASC
+      `;
       
-      submissionsByDay: dailySubmissionCounts,
-      
-      averageCompletionTime: averageCompletionTimeByJournal,
-      
-      usersByAccessLevel: usersByAccessLevel.map(item => ({
-        accessLevel: item.accessLevel,
-        count: item._count.id,
-        color: ACCESS_LEVEL_COLORS[item.accessLevel as keyof typeof ACCESS_LEVEL_COLORS] || "#6b7280"
-      })),
-      
+      let runningTotal = 0;
+      for (const row of monthlyUsers as any[]) {
+        runningTotal += Number(row.count);
+        userGrowthData.push({
+          date: row.month.toISOString().split('T')[0],
+          users: runningTotal
+        });
+      }
+    }
+    
+    // === Average Completion Time ===
+    const journalCompletionTimes = await prisma.journalSubmission.groupBy({
+      by: ['journalId'],
+      _avg: { totalTime: true },
+      where: dateFilter ? { createdAt: { gte: dateFilter } } : undefined
+    });
+    
+    const journals = await prisma.journal.findMany({
+      where: { id: { in: journalCompletionTimes.map(j => j.journalId) } },
+      select: { id: true, title: true }
+    });
+    
+    const journalMap = journals.reduce((acc, journal) => {
+      acc[journal.id] = journal.title;
+      return acc;
+    }, {} as Record<string, string>);
+    
+    const averageCompletionTime = journalCompletionTimes.map(item => ({
+      journalTitle: journalMap[item.journalId] || `Journal ${item.journalId.slice(0, 6)}...`,
+      averageTime: Math.round(item._avg.totalTime || 0)
+    })).sort((a, b) => b.averageTime - a.averageTime).slice(0, 10);
+    
+    // Calculate overall average completion time
+    const overallAvg = await prisma.journalSubmission.aggregate({
+      _avg: { totalTime: true },
+      where: dateFilter ? { createdAt: { gte: dateFilter } } : undefined
+    });
+    
+    return NextResponse.json({
+      submissionsByStatus,
+      submissionsByDay,
+      statusByDay,
+      averageCompletionTime,
+      usersByAccessLevel,
+      completionTimeDistribution,
+      mostActiveUsers,
+      userGrowthData,
       totalUsers,
       totalSubmissions,
       activeJournals,
-      averageCompletionTimeAll
-    };
+      averageCompletionTimeAll: Math.round(overallAvg._avg.totalTime || 0)
+    });
     
-    return NextResponse.json(formattedData);
   } catch (error) {
-    console.error('Error generating statistics:', error);
+    console.error('Error fetching statistics:', error);
     return NextResponse.json(
-      { error: 'Failed to generate statistics', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to fetch statistics data', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

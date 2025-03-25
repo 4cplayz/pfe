@@ -38,6 +38,12 @@ interface DashboardStats {
     date: string;
     count: number;
   }[];
+  statusByDay: {
+    date: string;
+    submitted: number;
+    reviewed: number;
+    draft: number;
+  }[];
   averageCompletionTime: {
     journalTitle: string;
     averageTime: number; // in seconds
@@ -46,6 +52,19 @@ interface DashboardStats {
     accessLevel: string;
     count: number;
     color: string;
+  }[];
+  completionTimeDistribution: {
+    range: string;
+    count: number;
+  }[];
+  mostActiveUsers: {
+    name: string;
+    matricule: string;
+    submissions: number;
+  }[];
+  userGrowthData: {
+    date: string;
+    users: number;
   }[];
   totalUsers: number;
   totalSubmissions: number;
@@ -82,11 +101,11 @@ export default function StatisticsPage() {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/statistics?days=${days}`);
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch statistics");
       }
-      
+
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -231,12 +250,12 @@ export default function StatisticsPage() {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip 
+                        <Tooltip
                           formatter={(value, name) => {
                             return [`${value} soumissions`, name === "SUBMITTED" ? "En attente" : name === "REVIEWED" ? "Revue" : "Brouillon"];
                           }}
                         />
-                        <Legend 
+                        <Legend
                           formatter={(value) => {
                             return value === "SUBMITTED" ? "En attente" : value === "REVIEWED" ? "Revue" : "Brouillon";
                           }}
@@ -309,28 +328,24 @@ export default function StatisticsPage() {
                         }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis 
-                          dataKey="date" 
-                          angle={-45} 
-                          textAnchor="end" 
-                          tick={{ fontSize: 12 }} 
+                        <XAxis
+                          dataKey="date"
+                          angle={-45}
+                          textAnchor="end"
+                          tick={{ fontSize: 12 }}
                           height={60}
                         />
-                        <YAxis
-                          tickFormatter={(value) => value.toFixed(0)}
-                        />
-                        <Tooltip
-                          formatter={(value) => [`${value} soumissions`, "Activité"]}
-                          labelFormatter={(label) => `Date: ${label}`}
-                        />
+                        <YAxis />
+                        <Tooltip />
                         <Legend />
                         <Line
                           type="monotone"
                           dataKey="count"
-                          name="Soumissions"
+                          name="Total Soumissions"
                           stroke="#60a5fa"
                           strokeWidth={2}
-                          activeDot={{ r: 8 }}
+                          dot={{ r: 2 }}
+                          activeDot={{ r: 6 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -357,11 +372,11 @@ export default function StatisticsPage() {
                         }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis 
-                          dataKey="journalTitle" 
-                          angle={-45} 
-                          textAnchor="end" 
-                          tick={{ fontSize: 12 }} 
+                        <XAxis
+                          dataKey="journalTitle"
+                          angle={-45}
+                          textAnchor="end"
+                          tick={{ fontSize: 12 }}
                           height={70}
                         />
                         <YAxis
@@ -398,12 +413,7 @@ export default function StatisticsPage() {
                   <CardContent>
                     <ResponsiveContainer width="100%" height={400}>
                       <LineChart
-                        data={stats.submissionsByDay.map(day => ({
-                          ...day,
-                          submitted: Math.round(day.count * 0.5), // Simulated data
-                          reviewed: Math.round(day.count * 0.3), // Simulated data
-                          draft: Math.round(day.count * 0.2) // Simulated data
-                        }))}
+                        data={stats.statusByDay}
                         margin={{
                           top: 5,
                           right: 30,
@@ -412,11 +422,11 @@ export default function StatisticsPage() {
                         }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis 
-                          dataKey="date" 
-                          angle={-45} 
-                          textAnchor="end" 
-                          tick={{ fontSize: 12 }} 
+                        <XAxis
+                          dataKey="date"
+                          angle={-45}
+                          textAnchor="end"
+                          tick={{ fontSize: 12 }}
                           height={60}
                         />
                         <YAxis />
@@ -465,14 +475,7 @@ export default function StatisticsPage() {
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart
-                        data={[
-                          { range: "< 1m", count: Math.round(stats.totalSubmissions * 0.05) },
-                          { range: "1-2m", count: Math.round(stats.totalSubmissions * 0.15) },
-                          { range: "2-5m", count: Math.round(stats.totalSubmissions * 0.35) },
-                          { range: "5-10m", count: Math.round(stats.totalSubmissions * 0.25) },
-                          { range: "10-15m", count: Math.round(stats.totalSubmissions * 0.12) },
-                          { range: "> 15m", count: Math.round(stats.totalSubmissions * 0.08) },
-                        ]}
+                        data={stats.completionTimeDistribution}
                         margin={{
                           top: 5,
                           right: 30,
@@ -507,15 +510,7 @@ export default function StatisticsPage() {
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart
                         layout="vertical"
-                        data={[
-                          { name: "Étudiant 1234567", submissions: 15 },
-                          { name: "Étudiant 2345678", submissions: 12 },
-                          { name: "Étudiant 3456789", submissions: 10 },
-                          { name: "Étudiant 4567890", submissions: 8 },
-                          { name: "Étudiant 5678901", submissions: 7 },
-                          { name: "Étudiant 6789012", submissions: 6 },
-                          { name: "Étudiant 7890123", submissions: 5 },
-                        ]}
+                        data={stats.mostActiveUsers}
                         margin={{
                           top: 5,
                           right: 30,
@@ -525,8 +520,20 @@ export default function StatisticsPage() {
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} horizontal={false} />
                         <XAxis type="number" />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
-                        <Tooltip />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          tick={{ fontSize: 12 }}
+                          width={80}
+                          formatter={(value) => `${value} (${stats.mostActiveUsers.find(u => u.name === value)?.matricule || ''})`}
+                        />
+                        <Tooltip
+                          formatter={(value) => [`${value} soumissions`, "Soumissions"]}
+                          labelFormatter={(name) => {
+                            const user = stats.mostActiveUsers.find(u => u.name === name);
+                            return `${name} (#${user?.matricule || ''})`;
+                          }}
+                        />
                         <Legend />
                         <Bar dataKey="submissions" name="Soumissions" fill="#60a5fa" radius={[0, 4, 4, 0]} />
                       </BarChart>
@@ -545,10 +552,7 @@ export default function StatisticsPage() {
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart
-                        data={stats.submissionsByDay.map((day, index) => ({
-                          date: day.date,
-                          users: Math.min(stats.totalUsers, 10 + index * 2) // Simulated growth
-                        }))}
+                        data={stats.userGrowthData}
                         margin={{
                           top: 5,
                           right: 30,
@@ -557,11 +561,11 @@ export default function StatisticsPage() {
                         }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis 
-                          dataKey="date" 
-                          angle={-45} 
-                          textAnchor="end" 
-                          tick={{ fontSize: 12 }} 
+                        <XAxis
+                          dataKey="date"
+                          angle={-45}
+                          textAnchor="end"
+                          tick={{ fontSize: 12 }}
                           height={60}
                         />
                         <YAxis />
