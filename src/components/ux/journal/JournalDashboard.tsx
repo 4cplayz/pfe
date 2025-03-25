@@ -121,11 +121,11 @@ export function JournalDashboard() {
       const journalData: CreateJournalData = {
         title: newJournal.title,
         description: newJournal.description || "",
-        // Convert permission string to AccessLevel enum used in the database
+        // Improved conversion from UI format to DB format
         accessLevel: (newJournal.permission === "Étudiant" ? "ETUDIANT" :
           newJournal.permission === "Professeur" ? "PROFESSEUR" :
-            newJournal.permission === "Responsable" ? "RESPONSABLE" :
-              "ETUDIANT") as AccessLevel,
+          newJournal.permission === "Responsable" ? "RESPONSABLE" :
+          "ETUDIANT") as AccessLevel,
         // Make sure sections are properly formatted for JSON storage
         sections: newJournal.sections.map(section => ({
           id: section.id,
@@ -134,9 +134,8 @@ export function JournalDashboard() {
           enabled: section.enabled
         })),
       };
-
+  
       const createdJournal = await createJournal(journalData);
-
       // Convert the created journal back to UI format
       const uiJournal: Journal = {
         id: createdJournal.id,

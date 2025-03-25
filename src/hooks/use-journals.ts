@@ -68,6 +68,7 @@ export function useJournals() {
 // In src/hooks/use-journals.ts
 
 // Create a new journal with enhanced error logging
+// In src/hooks/use-journals.ts
 const createJournal = async (journalData: CreateJournalData) => {
   try {
     console.log('Attempting to create journal with data:', JSON.stringify(journalData, null, 2));
@@ -98,7 +99,8 @@ const createJournal = async (journalData: CreateJournalData) => {
       throw new Error(responseData.error || 'Failed to create journal');
     }
     
-    setUsers((prevJournals) => [responseData, ...prevJournals]);
+    // Fix: Change setUsers to setJournals
+    setJournals((prevJournals) => [responseData, ...prevJournals]);
     
     return responseData;
   } catch (err) {

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Prepare sections data - ensure it's in the correct format
     const sections = Array.isArray(body.sections) ? body.sections : [];
     
-    // Create new journal with proper type conversion
+    // Create new journal without any creator reference
     const newJournal = await prisma.journal.create({
       data: {
         title: body.title,
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
         accessLevel: body.accessLevel || 'ETUDIANT',
         sections: sections, // This will be stored as JSON
         isActive: true
+        // No createdById or userId field
       },
     });
     
