@@ -181,6 +181,61 @@ const createJournal = async (journalData: CreateJournalData) => {
     }
   };
 
+  const activateJournal = async (id: string) => {
+    try {
+      setError(null);
+      
+      // Vérifier d'abord si le journal est déjà actif pour éviter les appels inutiles
+      const alreadyActive = journals.find(journal => journal.id === id)?.isActive;
+      if (alreadyActive) {
+        console.log('Journal already active, skipping API call');
+        return null; // Ne rien faire si déjà actif
+      }
+      
+      setLoading(true);
+      
+      const response = await fetch('/api/journals/activate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      
+      const responseText = await response.text();
+      let responseData;
+      
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', responseText);
+        throw new Error(`Invalid response: ${responseText}`);
+      }
+      
+      if (!response.ok) {
+        console.error('API error details:', responseData);
+        throw new Error(responseData.error || 'Failed to activate journal');
+      }
+      
+      // Mettre à jour l'état local pour refléter le changement
+      setJournals((prevJournals) =>
+        prevJournals.map((journal) => ({
+          ...journal,
+          isActive: journal.id === id
+        }))
+      );
+      
+      return responseData;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      console.error('Error activating journal:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load journals on initial mount
   useEffect(() => {
     fetchJournals();
@@ -195,5 +250,6 @@ const createJournal = async (journalData: CreateJournalData) => {
     createJournal,
     updateJournal,
     deleteJournal,
+    activateJournal, // Ajouter cette ligne
   };
 }

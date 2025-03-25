@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Journal, SECTION_FIELDS, SectionType } from "@/types/journal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +15,11 @@ interface JournalPreviewProps {
 }
 
 export function JournalPreview({ journal }: JournalPreviewProps) {
+  // Utiliser useMemo pour éviter les re-rendus inutiles
+  const enabledSections = useMemo(() => {
+    return journal?.sections.filter(section => section.enabled) || [];
+  }, [journal?.sections]);
+
   if (!journal) {
     return (
       <Card className="h-full shadow-md">
@@ -32,9 +38,6 @@ export function JournalPreview({ journal }: JournalPreviewProps) {
       </Card>
     );
   }
-
-  // Get enabled sections
-  const enabledSections = journal.sections.filter(section => section.enabled);
 
   return (
     <Card className="h-full shadow-md">
@@ -85,21 +88,21 @@ export function JournalPreview({ journal }: JournalPreviewProps) {
               {section.type === SectionType.VERIFICATION && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-start space-x-2">
-                    <Checkbox id="ouverture" disabled />
-                    <Label htmlFor="ouverture">Ouverture alimentée</Label>
+                    <Checkbox id={`ouverture-${section.id}`} disabled />
+                    <Label htmlFor={`ouverture-${section.id}`}>Ouverture alimentée</Label>
                   </div>
                   <div className="flex items-start space-x-2">
-                    <Checkbox id="fermeture" disabled />
-                    <Label htmlFor="fermeture">Fermeture alimentation</Label>
+                    <Checkbox id={`fermeture-${section.id}`} disabled />
+                    <Label htmlFor={`fermeture-${section.id}`}>Fermeture alimentation</Label>
                   </div>
                 </div>
               )}
 
               {section.type === SectionType.MATERIAL && (
                 <div className="space-y-1">
-                  <Label htmlFor="material-text">Matériel utilisé (description)</Label>
+                  <Label htmlFor={`material-text-${section.id}`}>Matériel utilisé (description)</Label>
                   <Textarea
-                    id="material-text"
+                    id={`material-text-${section.id}`}
                     placeholder="Description du matériel utilisé"
                     disabled
                   />
@@ -108,9 +111,9 @@ export function JournalPreview({ journal }: JournalPreviewProps) {
 
               {section.type === SectionType.NOTES && (
                 <div className="space-y-1">
-                  <Label htmlFor="notes-text">Prise de note (description)</Label>
+                  <Label htmlFor={`notes-text-${section.id}`}>Prise de note (description)</Label>
                   <Textarea
-                    id="notes-text"
+                    id={`notes-text-${section.id}`}
                     placeholder="Entrez vos notes de laboratoire"
                     disabled
                   />
@@ -119,9 +122,9 @@ export function JournalPreview({ journal }: JournalPreviewProps) {
 
               {section.type === SectionType.COMMENT && (
                 <div className="space-y-1">
-                  <Label htmlFor="comment-text">Autre (description)</Label>
+                  <Label htmlFor={`comment-text-${section.id}`}>Autre (description)</Label>
                   <Textarea
-                    id="comment-text"
+                    id={`comment-text-${section.id}`}
                     placeholder="Entrez vos commentaires supplémentaires"
                     disabled
                   />

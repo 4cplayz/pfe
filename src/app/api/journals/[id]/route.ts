@@ -65,7 +65,26 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description;
     if (body.accessLevel !== undefined) updateData.accessLevel = body.accessLevel;
     if (body.sections !== undefined) updateData.sections = body.sections;
-    if (body.isActive !== undefined) updateData.isActive = body.isActive;
+    if (body.isActive === true) {
+      console.log('Setting journal as active, deactivating all others');
+      
+      try {
+        // Désactiver tous les autres journaux
+        await prisma.journal.updateMany({
+          where: {
+            id: { not: id }, // Tous les journaux sauf celui-ci
+          },
+          data: {
+            isActive: false,
+          },
+        });
+        
+        console.log('Successfully deactivated other journals');
+      } catch (deactivateError) {
+        console.error('Error deactivating other journals:', deactivateError);
+        // Continuer malgré l'erreur pour mettre à jour le journal actuel
+      }
+    }
     
     console.log('Processed update data:', updateData);
     

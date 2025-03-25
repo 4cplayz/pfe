@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Journal } from "@/types/journal";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PenLine, Trash2, ChevronLeft, ChevronRight, Plus, Calendar, Lock, BookOpen, Layers } from "lucide-react";
+import { PenLine, Trash2, ChevronLeft, ChevronRight, Plus, Calendar, Lock, BookOpen, Layers, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface JournalBrowserProps {
@@ -28,9 +28,26 @@ export function JournalBrowser({
   const [direction, setDirection] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [hasJournals, setHasJournals] = useState(journals.length > 0);
+  
+  // Track previous journal length to éviter les mises à jour superflues
+  const prevJournalsLengthRef = useRef<number>(journals.length);
+  const hasInitialized = useRef<boolean>(false);
 
   useEffect(() => {
-    setHasJournals(journals.length > 0);
+    // Mettre à jour si le nombre de journaux a changé
+    if (prevJournalsLengthRef.current !== journals.length) {
+      setHasJournals(journals.length > 0);
+      prevJournalsLengthRef.current = journals.length;
+    }
+    
+    // Ne cherche le journal actif que lors du montage initial ou si le nombre de journaux a changé
+    if (!hasInitialized.current && journals.length > 0) {
+      const activeIndex = journals.findIndex(journal => journal.isActive);
+      if (activeIndex !== -1) {
+        setCurrentIndex(activeIndex);
+      }
+      hasInitialized.current = true;
+    }
   }, [journals]);
 
   // Navigate through carousel
@@ -51,7 +68,10 @@ export function JournalBrowser({
   // Select a journal from the carousel
   const handleSelect = () => {
     if (journals.length > 0) {
-      onSelect(journals[currentIndex]);
+      // Ne sélectionne pas si déjà actif, pour éviter les appels API inutiles
+      if (!journals[currentIndex].isActive) {
+        onSelect(journals[currentIndex]);
+      }
     }
   };
 
@@ -89,7 +109,7 @@ export function JournalBrowser({
       <CardContent className="p-0">
         <div className="relative overflow-hidden">
           <div ref={carouselRef} className="p-6">
-            {hasJournals ? (
+            {hasJournals && journals.length > 0 ? (
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={currentIndex}
@@ -100,11 +120,17 @@ export function JournalBrowser({
                   className="w-full"
                 >
                   <div className="bg-accent/30 p-5 rounded-lg border border-border/50 relative overflow-hidden">
-                    {/* Decorative element */}
+                    {/* Badge pour indiquer si le journal est actif */}
+                    {journals[currentIndex]?.isActive && (
+                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        Actif
+                      </div>
+                    )}
 
                     <div className="mb-4">
-                      <h3 className="text-xl font-bold text-primary/90">{journals[currentIndex].title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{journals[currentIndex].description}</p>
+                      <h3 className="text-xl font-bold text-primary/90">{journals[currentIndex]?.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{journals[currentIndex]?.description}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
@@ -114,7 +140,7 @@ export function JournalBrowser({
                         </div>
                         <div>
                           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Permission</p>
-                          <p className="text-sm font-medium">{journals[currentIndex].permission}</p>
+                          <p className="text-sm font-medium">{journals[currentIndex]?.permission}</p>
                         </div>
                       </div>
 
@@ -124,7 +150,7 @@ export function JournalBrowser({
                         </div>
                         <div>
                           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Créé le</p>
-                          <p className="text-sm font-medium">{formatDate(journals[currentIndex].createdAt)}</p>
+                          <p className="text-sm font-medium">{formatDate(journals[currentIndex]?.createdAt)}</p>
                         </div>
                       </div>
                     </div>
@@ -136,7 +162,7 @@ export function JournalBrowser({
                       <div className="flex-1">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sections activées</p>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {journals[currentIndex].sections.filter(s => s.enabled).length > 0 ? (
+                          {journals[currentIndex]?.sections.filter(s => s.enabled).length > 0 ? (
                             journals[currentIndex].sections
                               .filter(s => s.enabled)
                               .map(s => (
@@ -172,10 +198,13 @@ export function JournalBrowser({
                             setDirection(index > currentIndex ? 1 : -1);
                             setCurrentIndex(index);
                           }}
-                          className={`w-2 h-2 rounded-full transition-all ${index === currentIndex
-                            ? "bg-primary w-4"
-                            : "bg-muted-foreground/40 hover:bg-muted-foreground/60"
-                            }`}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            index === currentIndex
+                              ? "bg-primary w-4"
+                              : journals[index].isActive
+                                ? "bg-primary/40 w-3"
+                                : "bg-muted-foreground/40 hover:bg-muted-foreground/60"
+                          }`}
                           aria-label={`Go to journal ${index + 1}`}
                         />
                       ))}
@@ -212,14 +241,16 @@ export function JournalBrowser({
         </div>
       </CardContent>
 
-      {hasJournals && (
+      {hasJournals && journals.length > 0 && (
         <CardFooter className="flex justify-between border-t p-4 bg-muted/20">
           <Button
-            variant={journals[currentIndex].id === selectedJournalId ? "secondary" : "default"}
+            variant={journals[currentIndex]?.isActive ? "secondary" : "default"}
             onClick={handleSelect}
             className="shadow-sm"
+            // Désactiver le bouton si déjà actif pour éviter les mises à jour inutiles
+            disabled={journals[currentIndex]?.isActive === true}
           >
-            {journals[currentIndex].id === selectedJournalId ? "Sélectionné" : "Sélectionner"}
+            {journals[currentIndex]?.isActive ? "Journal Actif" : "Activer"}
           </Button>
 
           <div className="flex gap-2">

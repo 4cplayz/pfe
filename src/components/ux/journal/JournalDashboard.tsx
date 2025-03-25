@@ -7,7 +7,7 @@ import { JournalPreview } from "./JounralPreview";
 import { Journal, SectionType } from "@/types/journal";
 import { useJournals } from "@/hooks/use-journals";
 import { CreateJournalData } from "@/types/journal-db";
-import { useToast } from "@/components/ui/use-toast"; // You'll need to add a toast component
+import { useToast } from "@/components/ui/use-toast";
 
 // Initial template for creating a new journal
 const EMPTY_JOURNAL: Journal = {
@@ -40,7 +40,8 @@ export function JournalDashboard() {
     fetchJournals,
     createJournal,
     updateJournal,
-    deleteJournal
+    deleteJournal,
+    activateJournal
   } = useJournals();
 
   // Convert DB journals to our UI format
@@ -51,13 +52,50 @@ export function JournalDashboard() {
     permission: journal.accessLevel,
     sections: journal.sections as any, // Type cast as it's stored as JSON
     createdAt: new Date(journal.createdAt),
-    updatedAt: new Date(journal.updatedAt)
+    updatedAt: new Date(journal.updatedAt),
+    isActive: journal.isActive // Ajouter cette propriété
   }));
 
-  // Handlers for journal management
-  const handleJournalSelect = (journal: Journal) => {
-    setSelectedJournal(journal);
-    setMode('view');
+  // Au chargement initial uniquement, définir le journal sélectionné sur celui qui est actif
+  // Utilisons une référence pour éviter des mises à jour en boucle
+  useEffect(() => {
+    if (journals.length > 0 && !selectedJournal) {
+      const activeJournal = journals.find(journal => journal.isActive);
+      if (activeJournal) {
+        setSelectedJournal(activeJournal);
+      }
+    }
+  }, [journals.length]); // Dépendance simplifiée pour éviter de déclencher trop souvent
+
+  // Nouvelle fonction pour gérer la sélection et l'activation d'un journal
+  const handleJournalSelect = async (journal: Journal) => {
+    try {
+      // Éviter de réactiver si déjà actif
+      if (journal.isActive) {
+        setSelectedJournal(journal);
+        setMode('view');
+        return;
+      }
+      
+      // Mettre à jour l'état UI immédiatement pour une réponse rapide
+      setSelectedJournal(journal);
+      setMode('view');
+      
+      // Appeler l'API pour mettre à jour la base de données
+      await activateJournal(journal.id);
+      
+      toast({
+        title: "Journal sélectionné",
+        description: "Ce journal est maintenant actif.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'activation du journal:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la sélection du journal.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCreateNewJournal = () => {
@@ -140,7 +178,7 @@ export function JournalDashboard() {
         accessLevel: (newJournal.permission === "Étudiant" ? "ETUDIANT" :
           newJournal.permission === "Professeur" ? "PROFESSEUR" :
           newJournal.permission === "Responsable" ? "RESPONSABLE" :
-          "ETUDIANT") as AccessLevel,
+          "ETUDIANT") as any, // Use "as any" to avoid import AccessLevel type
         // Make sure sections are properly formatted for JSON storage
         sections: newJournal.sections.map(section => ({
           id: section.id,
@@ -159,7 +197,8 @@ export function JournalDashboard() {
         permission: createdJournal.accessLevel,
         sections: createdJournal.sections as any,
         createdAt: new Date(createdJournal.createdAt),
-        updatedAt: new Date(createdJournal.updatedAt)
+        updatedAt: new Date(createdJournal.updatedAt),
+        isActive: createdJournal.isActive // Ajouter cette propriété
       };
 
       setSelectedJournal(uiJournal);
@@ -169,6 +208,9 @@ export function JournalDashboard() {
         title: "Journal créé",
         description: "Le journal a été créé avec succès.",
       });
+      
+      // Activer le nouveau journal automatiquement
+      await activateJournal(uiJournal.id);
     } catch (error) {
       console.error("Error creating journal:", error);
       toast({
