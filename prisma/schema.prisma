@@ -14,7 +14,7 @@ model User {
   matricule         String       @unique
   accessLevel       AccessLevel  @default(ETUDIANT)
   journalsCompleted Int          @default(0)
-  isActive          Boolean      @default(true)
+  isActive          Boolean      @default(false)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @default(now()) @updatedAt
 }
@@ -25,7 +25,7 @@ model Journal {
   description  String?
   accessLevel  AccessLevel @default(ETUDIANT)
   sections     Json        // Store the sections configuration as JSON
-  isActive     Boolean     @default(true)
+  isActive     Boolean     @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
 }
