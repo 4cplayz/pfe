@@ -112,11 +112,12 @@ export async function PATCH(
 // DELETE /api/journals/[id] - Delete a journal
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Properly await the params object
-    const { id } = await params;
+    const id = params.id;
+    
+    console.log(`Attempting to delete journal with ID: ${id}`);
     
     // Check if journal exists
     const existingJournal = await prisma.journal.findUnique({
@@ -124,22 +125,40 @@ export async function DELETE(
     });
     
     if (!existingJournal) {
+      console.log('Journal not found with ID:', id);
       return NextResponse.json(
         { error: 'Journal not found' },
         { status: 404 }
       );
     }
     
-    // Delete journal
+    // First delete all related journal submissions
+    console.log(`Deleting all submissions for journal ID: ${id}`);
+    const deletedSubmissions = await prisma.journalSubmission.deleteMany({
+      where: { journalId: id },
+    });
+    
+    console.log(`Deleted ${deletedSubmissions.count} submissions`);
+    
+    // Then delete the journal
+    console.log(`Now deleting the journal with ID: ${id}`);
     await prisma.journal.delete({
       where: { id },
     });
     
-    return NextResponse.json({ success: true });
+    console.log(`Journal successfully deleted: ${id}`);
+    
+    return NextResponse.json({ 
+      success: true,
+      message: `Journal deleted along with ${deletedSubmissions.count} submissions` 
+    });
   } catch (error) {
     console.error('Error deleting journal:', error);
     return NextResponse.json(
-      { error: 'Failed to delete journal' },
+      { 
+        error: 'Failed to delete journal',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
