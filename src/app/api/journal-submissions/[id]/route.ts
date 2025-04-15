@@ -7,10 +7,11 @@ const prisma = new PrismaClient();
 // GET /api/journal-submissions/[id] - Get a specific journal submission
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    // Properly await the params object
+    const { id } = await params;
     
     const submission = await prisma.journalSubmission.findUnique({
       where: { id },
@@ -54,10 +55,11 @@ export async function GET(
 // PATCH /api/journal-submissions/[id] - Update a journal submission (e.g., change status, add feedback)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    // Properly await the params object
+    const { id } = await params;
     const body = await request.json();
     
     // Check if submission exists
@@ -106,10 +108,11 @@ export async function PATCH(
 // DELETE /api/journal-submissions/[id] - Delete a journal submission
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    // Properly await the params object
+    const { id } = await params;
     
     // Check if submission exists
     const existingSubmission = await prisma.journalSubmission.findUnique({
