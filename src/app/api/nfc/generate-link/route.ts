@@ -5,7 +5,7 @@ import crypto from 'crypto';
  * Generate a secure random token
  * @returns Random token string
  */
-function generateRandomToken(length = 16) {
+function generateRandomToken(length = 2) {
   return crypto.randomBytes(length).toString('hex');
 }
 
