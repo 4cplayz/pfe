@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     expiresAt.setHours(expiresAt.getHours() + 4);
     
     // Get base URL from environment or use default for dev
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://iato.ca';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://iato.ca';
     
     // Format full URL
     const url = `${baseUrl}/link/${token}`;
