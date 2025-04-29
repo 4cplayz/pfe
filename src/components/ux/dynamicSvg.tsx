@@ -1,9 +1,9 @@
 "use client"
 import React, { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
+import Image from "next/image"
 
 const DynamicSvg: React.FC = () => {
-  const [svgContent, setSvgContent] = useState<string | null>(null)
   const { theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -11,39 +11,27 @@ const DynamicSvg: React.FC = () => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (!mounted) return
+  if (!mounted) {
+    // Return a placeholder with the same dimensions to prevent layout shift
+    return <div className="w-[100px] h-[40px]" />
+  }
 
-    // Use resolvedTheme if theme is "system"
-    const currentTheme = theme === "system" ? resolvedTheme : theme
-    const filePath =
-      currentTheme === "dark"
-        ? "/iato_500x500_W.svg"
-        : "/iato_500x500_B.svg"
-
-    const loadSvg = async () => {
-      try {
-        const response = await fetch(filePath)
-        const svgText = await response.text()
-        setSvgContent(svgText)
-      } catch (error) {
-        console.error("Error loading SVG:", error)
-      }
-    }
-
-    loadSvg()
-  }, [mounted, theme, resolvedTheme])
-
-  if (!mounted || !svgContent) return null
+  // Use resolvedTheme to determine which logo to display
+  const currentTheme = theme === "system" ? resolvedTheme : theme
+  const logoSrc = currentTheme === "dark" 
+    ? "/iato_500x500_B.svg" 
+    : "/iato_500x500_B.svg"
 
   return (
-    <div
-      // The transform scales the logo 2x while keeping the top-left corner as the origin
-      className="ml-3"
-      style={{ transform: "scale(4)", transformOrigin: "center" }}
-      dangerouslySetInnerHTML={{ __html: svgContent }}
-      aria-hidden="true"
-    />
+    <div className="relative w-[32px] h-[32px]">
+      <Image 
+        src={logoSrc}
+        alt="IATO Logo"
+        fill
+        className="object-contain"
+        priority
+      />
+    </div>
   )
 }
 
