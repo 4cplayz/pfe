@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ThemeSwitcher } from "../theme/themeSwitcher"
 import { BookOpen, PenTool, Calendar, FileText } from 'lucide-react';
+import DynamicSvg from "./dynamicSvg";
 
 export function Navbar() {
   return (
@@ -12,6 +13,7 @@ export function Navbar() {
         <div className="flex flex-1 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
             <BookOpen size={24} strokeWidth={1.5} />
+            <DynamicSvg/>
           </Link>
           <div className="flex items-center">
             <ThemeSwitcher />
