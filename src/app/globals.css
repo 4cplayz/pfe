@@ -6,73 +6,107 @@
 
 :root {
   --radius: 0.5rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.15 0.01 265);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.01 265);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.01 265);
-  --primary: oklch(0.6 0.24 0);
-  --primary-foreground: oklch(0.99 0.01 0);
-  --secondary: oklch(0.96 0.005 265);
-  --secondary-foreground: oklch(0.2 0.006 265);
-  --muted: oklch(0.96 0.005 265);
-  --muted-foreground: oklch(0.54 0.004 265);
-  --accent: oklch(0.96 0.005 265);
-  --accent-foreground: oklch(0.2 0.006 265);
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.89 0.006 265);
-  --input: oklch(0.89 0.006 265);
-  --ring: oklch(0.6 0.24 0);
-  --chart-1: oklch(0.7 0.2 15);
-  --chart-2: oklch(0.6 0.2 175);
-  --chart-3: oklch(0.46 0.13 200);
-  --chart-4: oklch(0.7 0.2 60);
-  --chart-5: oklch(0.72 0.25 37);
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(240 5.9% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --sidebar-border: hsl(220 13% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  /* Base colors - Light mode */
+  --background: oklch(1 0 0); /* White background */
+  --foreground: oklch(0.25 0.04 195); /* Dark teal text */
+  --card: oklch(1 0 0); /* White card background */
+  --card-foreground: oklch(0.25 0.04 195); /* Dark teal card text */
+  --popover: oklch(1 0 0); /* White popover */
+  --popover-foreground: oklch(0.25 0.04 195); /* Dark teal popover text */
+  
+  /* Primary - Your logo color */
+  --primary: oklch(0.65 0.14 195); /* #3EA9AE - Your logo teal */
+  --primary-foreground: oklch(0.99 0.01 0); /* White text on primary */
+  
+  /* Secondary color - Light teal */
+  --secondary: oklch(0.94 0.03 195); /* Light teal */
+  --secondary-foreground: oklch(0.2 0.08 195); /* Dark teal on secondary */
+  
+  /* Muted elements */
+  --muted: oklch(0.95 0.03 195); /* Very light teal */
+  --muted-foreground: oklch(0.55 0.05 195); /* Medium teal for muted text */
+  
+  /* Accent colors */
+  --accent: oklch(0.94 0.03 195); /* Light teal accent */
+  --accent-foreground: oklch(0.2 0.08 195); /* Dark teal on accent */
+  
+  /* Destructive colors */
+  --destructive: oklch(0.65 0.16 25); /* Red-based destructive */
+  --destructive-foreground: oklch(0.99 0 0); /* White on destructive */
+  
+  /* UI elements */
+  --border: oklch(0.85 0.03 195); /* Light teal border */
+  --input: oklch(0.85 0.03 195); /* Light teal input border */
+  --ring: oklch(0.65 0.14 195); /* #3EA9AE - Logo teal for focus rings */
+  
+  /* Chart colors */
+  --chart-1: oklch(0.65 0.14 195); /* Your logo teal #3EA9AE */
+  --chart-2: oklch(0.7 0.17 225); /* Blue-teal */
+  --chart-3: oklch(0.6 0.15 165); /* Green-teal */
+  --chart-4: oklch(0.7 0.16 180); /* Cyan-teal */
+  --chart-5: oklch(0.75 0.13 210); /* Blue-teal */
+  
+  /* Sidebar colors */
+  --sidebar: hsl(185 54% 85%); /* Very light teal sidebar */
+  --sidebar-foreground: hsl(185 54% 25%); /* Dark teal sidebar text */
+  --sidebar-primary: hsl(185 54% 46%); /* #3EA9AE - Teal primary sidebar element */
+  --sidebar-primary-foreground: hsl(0 0% 100%); /* White text on primary sidebar */
+  --sidebar-accent: hsl(185 30% 94%); /* Very light teal sidebar accent */
+  --sidebar-accent-foreground: hsl(185 54% 25%); /* Dark teal on sidebar accent */
+  --sidebar-border: hsl(185 20% 90%); /* Light teal sidebar border */
+  --sidebar-ring: hsl(185 54% 60%); /* Bright teal sidebar ring */
 }
 
 .dark {
-  --background: oklch(0.15 0.01 20);
-  --foreground: oklch(0.96 0 0);
-  --card: oklch(0.2 0.005 24);
-  --card-foreground: oklch(0.96 0 0);
-  --popover: oklch(0.12 0 0);
-  --popover-foreground: oklch(0.96 0 0);
-  --primary: oklch(0.6 0.24 0);
-  --primary-foreground: oklch(0.99 0.01 356);
-  --secondary: oklch(0.26 0.004 240);
-  --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.2 0 0);
-  --muted-foreground: oklch(0.65 0.005 240);
-  --accent: oklch(0.2 0.003 15);
-  --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.4 0.18 20);
-  --destructive-foreground: oklch(0.98 0.01 15);
-  --border: oklch(0.26 0.004 240);
-  --input: oklch(0.26 0.004 240);
-  --ring: oklch(0.6 0.24 0);
-  --chart-1: oklch(0.5 0.2 220);
-  --chart-2: oklch(0.52 0.18 160);
-  --chart-3: oklch(0.6 0.22 30);
-  --chart-4: oklch(0.55 0.18 280);
-  --chart-5: oklch(0.6 0.2 340);
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  /* Base colors - Dark mode */
+  --background: oklch(0.14 0.02 195); /* Very dark teal background */
+  --foreground: oklch(0.9 0.02 195); /* Light teal text */
+  --card: oklch(0.18 0.03 195); /* Dark teal card */
+  --card-foreground: oklch(0.9 0.02 195); /* Light teal card text */
+  --popover: oklch(0.12 0.02 195); /* Very dark teal popover */
+  --popover-foreground: oklch(0.9 0.02 195); /* Light teal popover text */
+  
+  /* Primary - Your logo color */
+  --primary: oklch(0.65 0.14 195); /* #3EA9AE - Your logo teal, keep same in dark */
+  --primary-foreground: oklch(0.99 0.01 0); /* White text on primary */
+  
+  /* Secondary color */
+  --secondary: oklch(0.25 0.06 195); /* Darker teal */
+  --secondary-foreground: oklch(0.93 0.02 195); /* Light teal on secondary */
+  
+  /* Muted elements */
+  --muted: oklch(0.2 0.03 195); /* Dark muted teal */
+  --muted-foreground: oklch(0.65 0.08 195); /* Medium-light teal for muted text */
+  
+  /* Accent colors */
+  --accent: oklch(0.25 0.05 195); /* Dark teal accent */
+  --accent-foreground: oklch(0.93 0.02 195); /* Light teal on accent */
+  
+  /* Destructive colors */
+  --destructive: oklch(0.5 0.15 20); /* Darker red destructive */
+  --destructive-foreground: oklch(0.95 0.01 15); /* Light color on destructive */
+  
+  /* UI elements */
+  --border: oklch(0.3 0.05 195); /* Dark teal border */
+  --input: oklch(0.3 0.05 195); /* Dark teal input border */
+  --ring: oklch(0.65 0.14 195); /* #3EA9AE - Logo teal for focus rings */
+  
+  /* Chart colors - adjusted for dark mode */
+  --chart-1: oklch(0.65 0.14 195); /* Your logo teal #3EA9AE */
+  --chart-2: oklch(0.7 0.17 225); /* Blue-teal */
+  --chart-3: oklch(0.6 0.15 165); /* Green-teal */
+  --chart-4: oklch(0.7 0.16 180); /* Cyan-teal */
+  --chart-5: oklch(0.75 0.13 210); /* Blue-teal */
+  
+  /* Sidebar colors - dark mode */
+  --sidebar: hsl(185 30% 20%); /* Dark teal sidebar */
+  --sidebar-foreground: hsl(185 30% 90%); /* Light teal sidebar text */
+  --sidebar-primary: hsl(185 54% 46%); /* #3EA9AE - Teal primary sidebar element */
+  --sidebar-primary-foreground: hsl(0 0% 100%); /* White text on primary sidebar */
+  --sidebar-accent: hsl(185 20% 25%); /* Dark teal sidebar accent */
+  --sidebar-accent-foreground: hsl(185 30% 90%); /* Light teal on sidebar accent */
+  --sidebar-border: hsl(185 20% 30%); /* Dark teal sidebar border */
+  --sidebar-ring: hsl(185 54% 60%); /* Bright teal sidebar ring */
 }
 
 @theme inline {
