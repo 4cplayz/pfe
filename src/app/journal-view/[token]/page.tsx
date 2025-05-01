@@ -607,7 +607,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                 <div></div>
               </div>
 
-              <div className="flex justify-between items-center gap-4 pt-4">
+              <div className="flex justify-between md:flex-row flex-col items-center gap-4 pt-4">
                 {!hasEditPermission() && (
                   <div className="bg-yellow-100 dark:bg-yellow-900/30 px-4 py-2 rounded-md flex items-center text-yellow-800 dark:text-yellow-400">
                     <LockIcon className="h-4 w-4 mr-2" />
@@ -616,7 +616,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                     </span>
                   </div>
                 )}
-                <div className="flex-1 flex justify-end gap-4">
+                <div className="flex flex-1 gap-4">
                   <Button
                     type="button"
                     variant="outline"
