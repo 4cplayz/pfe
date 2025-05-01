@@ -439,9 +439,9 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
         ) : activeJournal ? (
           <Card className="shadow-md max-w-3xl mx-auto">
             <CardHeader className="pb-4 border-b">
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between gap-4 items-start">
                 <div>
-                  <CardTitle className="text-xl flex items-center gap-2">
+                  <CardTitle className="text-xl flex items-center gap-2 sm:flex-row flex-col-reverse">
                     {activeJournal.title}
                     {activeJournal.isActive && (
                       <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full flex items-center gap-1">
