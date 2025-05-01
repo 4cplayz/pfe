@@ -421,7 +421,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
+              <User className="h-4 w-4 text-muted-foreground sm:block hidden" />
               <span className="text-sm font-medium">{userInfo?.name} (#{userInfo?.matricule})</span>
             </div>
             <ThemeSwitcher />
