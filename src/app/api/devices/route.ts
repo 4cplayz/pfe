@@ -29,8 +29,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get the client IP address
-    const ipAddress = request.headers.get('x-forwarded-for') || 
+    // Use IP address from the device payload if provided
+    const ipAddress = body.ipAddress || 
+                      request.headers.get('x-forwarded-for') || 
                       request.ip || 
                       'unknown';
     
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     const device = addOrUpdateDevice({
       id: body.id,
       name: body.name,
-      ipAddress: ipAddress as string,
+      ipAddress: ipAddress,
       status: 'on',
       lastSeen: new Date(),
       relayState: body.relayState !== undefined ? body.relayState : false

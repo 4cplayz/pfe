@@ -27,12 +27,12 @@ export default function AdminDashboard() {
   // Fetch devices on component mount and set up polling
   useEffect(() => {
     fetchDevices();
-    
+
     // Poll for device updates every 5 seconds
     const interval = setInterval(() => {
       fetchDevices(true);
     }, 5000);
-    
+
     // Clean up interval on component unmount
     return () => clearInterval(interval);
   }, []);
@@ -42,22 +42,22 @@ export default function AdminDashboard() {
     if (!silent) {
       setLoading(true);
     }
-    
+
     try {
       const response = await fetch('/api/devices');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch devices');
       }
-      
+
       const data = await response.json();
-      
+
       // Convert lastSeen strings to Date objects
       const formattedDevices = data.map((device: any) => ({
         ...device,
         lastSeen: new Date(device.lastSeen)
       }));
-      
+
       setDevices(formattedDevices);
     } catch (error) {
       console.error('Error fetching devices:', error);
@@ -81,50 +81,63 @@ export default function AdminDashboard() {
   };
 
   // Function to toggle a device's relay state
-  const toggleRelayState = async (deviceId: string, currentState: boolean) => {
+  const toggleRelayState = async (deviceId: string, currentState: boolean, ipAddress: string) => {
     try {
       // Optimistically update the UI
-      setDevices(prevDevices => 
-        prevDevices.map(device => 
-          device.id === deviceId 
-            ? { ...device, relayState: !currentState } 
+      setDevices(prevDevices =>
+        prevDevices.map(device =>
+          device.id === deviceId
+            ? { ...device, relayState: !currentState }
             : device
         )
       );
-      
-      // Send update to the API
-      const response = await fetch(`/api/devices/${deviceId}`, {
+
+      // First, update your backend
+      const backendResponse = await fetch(`/api/devices/${deviceId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ relayState: !currentState }),
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update device');
+
+      if (!backendResponse.ok) {
+        throw new Error('Failed to update device in backend');
       }
-      
+
+      // Then, directly connect to the ESP32 to update its state
+      const espResponse = await fetch(`http://${ipAddress}/relay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `state=${!currentState ? 'on' : 'off'}`,
+      });
+
+      if (!espResponse.ok) {
+        throw new Error('Failed to update device state on ESP32');
+      }
+
       // Show success toast
       toast({
         title: "Succès",
         description: `Appareil ${!currentState ? 'activé' : 'désactivé'} avec succès`,
       });
-      
+
       // Refresh devices to get latest state
       fetchDevices(true);
     } catch (error) {
       console.error('Error toggling device state:', error);
-      
+
       // Revert the optimistic update
-      setDevices(prevDevices => 
-        prevDevices.map(device => 
-          device.id === deviceId 
-            ? { ...device, relayState: currentState } 
+      setDevices(prevDevices =>
+        prevDevices.map(device =>
+          device.id === deviceId
+            ? { ...device, relayState: currentState }
             : device
         )
       );
-      
+
       toast({
         title: "Erreur",
         description: "Impossible de modifier l'état de l'appareil",
@@ -133,26 +146,27 @@ export default function AdminDashboard() {
     }
   };
 
+
   // Function to format the last seen time
   const formatLastSeen = (date: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffSeconds = Math.floor(diffMs / 1000);
-    
+
     if (diffSeconds < 60) {
       return `Il y a ${diffSeconds} seconde${diffSeconds !== 1 ? 's' : ''}`;
     }
-    
+
     const diffMinutes = Math.floor(diffSeconds / 60);
     if (diffMinutes < 60) {
       return `Il y a ${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''}`;
     }
-    
+
     const diffHours = Math.floor(diffMinutes / 60);
     if (diffHours < 24) {
       return `Il y a ${diffHours} heure${diffHours !== 1 ? 's' : ''}`;
     }
-    
+
     const diffDays = Math.floor(diffHours / 24);
     return `Il y a ${diffDays} jour${diffDays !== 1 ? 's' : ''}`;
   };
@@ -219,7 +233,7 @@ export default function AdminDashboard() {
                     <Switch
                       id={`relay-${device.id}`}
                       checked={device.relayState}
-                      onCheckedChange={() => toggleRelayState(device.id, device.relayState)}
+                      onCheckedChange={() => toggleRelayState(device.id, device.relayState, device.ipAddress)}
                       disabled={device.status === 'off'}
                     />
                   </div>

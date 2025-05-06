@@ -49,13 +49,33 @@ export async function PATCH(
       );
     }
     
-    // Update relay state
-    if (body.relayState !== undefined) {
-      const updatedDevice = updateDeviceState(id, body.relayState);
-      return NextResponse.json(updatedDevice);
+    // Update the device record
+    const updates: Partial<Device> = {};
+    
+    // Update IP address if provided
+    if (body.ipAddress) {
+      updates.ipAddress = body.ipAddress;
     }
     
-    return NextResponse.json(device);
+    // Update relay state if provided
+    if (body.relayState !== undefined) {
+      updates.relayState = body.relayState;
+    }
+    
+    if (body.status) {
+      updates.status = body.status;
+    }
+    
+    // Update the device with all provided fields
+    const updatedDevice = {
+      ...device,
+      ...updates,
+      lastSeen: new Date()
+    };
+    
+    deviceStore[id] = updatedDevice;
+    
+    return NextResponse.json(updatedDevice);
   } catch (error) {
     console.error('Error updating device:', error);
     return NextResponse.json(
