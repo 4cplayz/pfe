@@ -92,8 +92,8 @@ export default function AdminDashboard() {
         )
       );
 
-      // First, update your backend
-      const backendResponse = await fetch(`/api/devices/${deviceId}`, {
+      // First, update the backend
+      await fetch(`/api/devices/${deviceId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -101,21 +101,25 @@ export default function AdminDashboard() {
         body: JSON.stringify({ relayState: !currentState }),
       });
 
-      if (!backendResponse.ok) {
-        throw new Error('Failed to update device in backend');
-      }
+      // Then, send a direct command to the ESP32
+      console.log(`Sending command to ESP32 at http://${ipAddress}/relay`);
 
-      // Then, directly connect to the ESP32 to update its state
-      const espResponse = await fetch(`http://${ipAddress}/relay`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `state=${!currentState ? 'on' : 'off'}`,
-      });
+      try {
+        const response = await fetch(`http://${ipAddress}/relay`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `state=${!currentState ? 'on' : 'off'}`,
+        });
 
-      if (!espResponse.ok) {
-        throw new Error('Failed to update device state on ESP32');
+        if (!response.ok) {
+          console.error('Direct ESP32 request failed:', await response.text());
+          throw new Error('Failed to update device directly');
+        }
+      } catch (espError) {
+        console.error('Error connecting to ESP32:', espError);
+        throw new Error('Could not connect to device');
       }
 
       // Show success toast
