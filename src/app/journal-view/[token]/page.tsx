@@ -438,17 +438,12 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
           </div>
         ) : activeJournal ? (
           <Card className="shadow-md max-w-3xl mx-auto">
-            <CardHeader className="pb-4 border-b">
-              <div className="flex justify-between gap-4 items-start">
-                <div>
+            <CardHeader className="pb-4 border-b ">
+              <div className="flex justify-between flex-col-reverse gap-4 items-start">
+                <div className=' w-full'>
                   <CardTitle className="text-xl flex items-center gap-2 sm:flex-row flex-col-reverse">
                     {activeJournal.title}
-                    {activeJournal.isActive && (
-                      <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        Actif
-                      </span>
-                    )}
+
                   </CardTitle>
                   {activeJournal.description && (
                     <CardDescription className="mt-1">
@@ -456,7 +451,13 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                     </CardDescription>
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="sm:text-sm text-xs text-end text-muted-foreground items-center flex justify-between gap-2 w-full">
+                  {activeJournal.isActive && (
+                    <span className="bg-primary/10 text-primary max-h-5 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Actif
+                    </span>
+                  )}
                   Dernière mise à jour: {formatDate(activeJournal.updatedAt)}
                 </div>
               </div>
@@ -466,11 +467,11 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
               {/* Journal Header */}
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
+                  <div className="space-y-1 ">
                     <Label className="text-xs text-muted-foreground">Date</Label>
                     <Input value={getCurrentDateTime().split(',')[0]} readOnly />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 ">
                     <Label className="text-xs text-muted-foreground">Heure de début</Label>
                     <Input value={getCurrentDateTime().split(',')[1]?.trim()} readOnly />
                   </div>
@@ -545,13 +546,13 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                           )}
 
                           {section.type === SectionType.MATERIAL && (
-                            <div className="space-y-1">
+                            <div className="space-y-1 ">
                               <Label htmlFor={`material-text-${section.id}`}>Matériel utilisé (description)</Label>
                               <Textarea
                                 id={`material-text-${section.id}`}
                                 placeholder={hasEditPermission() ? "Description du matériel utilisé" : "Vous n'avez pas les droits d'accès pour modifier ce champ"}
                                 readOnly={!hasEditPermission()}
-                                className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed" : ""}
+                                className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed mt-2" : "mt-2"}
                                 value={formResponses[section.id] || ''}
                                 onChange={(e) => handleInputChange(section.id, e.target.value)}
                               />
@@ -566,7 +567,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                                 placeholder={hasEditPermission() ? "Entrez vos notes de laboratoire" : "Vous n'avez pas les droits d'accès pour modifier ce champ"}
                                 rows={4}
                                 readOnly={!hasEditPermission()}
-                                className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed" : ""}
+                                className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed mt-2" : "mt-2"}
                                 value={formResponses[section.id] || ''}
                                 onChange={(e) => handleInputChange(section.id, e.target.value)}
                               />
@@ -580,7 +581,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                                 id={`comment-text-${section.id}`}
                                 placeholder={hasEditPermission() ? "Entrez vos commentaires supplémentaires" : "Vous n'avez pas les droits d'accès pour modifier ce champ"}
                                 readOnly={!hasEditPermission()}
-                                className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed" : ""}
+                                className={!hasEditPermission() ? "bg-muted/30 cursor-not-allowed mt-2" : " mt-2"}
                                 value={formResponses[section.id] || ''}
                                 onChange={(e) => handleInputChange(section.id, e.target.value)}
                               />
@@ -607,16 +608,16 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                 <div></div>
               </div>
 
-              <div className="flex justify-between md:flex-row flex-col items-center gap-4 pt-4">
+              <div className="flex justify-between md:flex-row flex-col items-center gap-2">
                 {!hasEditPermission() && (
-                  <div className="bg-yellow-100 dark:bg-yellow-900/30 px-4 py-2 rounded-md flex items-center text-yellow-800 dark:text-yellow-400">
-                    <LockIcon className="h-4 w-4 mr-2" />
-                    <span className="text-sm">
+                  <div className="bg-yellow-100 dark:bg-yellow-900/30 w-full justify-evenly px-2 py-2 rounded-md flex items-center text-yellow-800 dark:text-yellow-400">
+                    <LockIcon className="min-h-4 min-w-4 " />
+                    <span className="sm:text-sm text-xs text-center">
                       Vous n'avez pas le niveau d'accès requis pour modifier ce journal ({userInfo?.accessLevel} &lt; {activeJournal.accessLevel})
                     </span>
                   </div>
                 )}
-                <div className="flex flex-1 gap-4">
+                <div className="flex flex-1 gap-2">
                   <Button
                     type="button"
                     variant="outline"
