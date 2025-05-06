@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { useJournalSubmissions } from '@/hooks/use-journal-submissions';
 import { CreateJournalSubmission, SectionResponse } from '@/types/journal-submission';
+import DynamicSvg from '@/components/ux/dynamicSvg';
 
 interface JournalViewPageProps {
   params: Promise<{
@@ -416,7 +417,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
       <header className="border-b bg-background/95 backdrop-blur px-4 py-3 sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <BookOpen size={24} strokeWidth={1.5} className='text-primary' />
+            <DynamicSvg />
           </div>
 
           <div className="flex items-center gap-4">
