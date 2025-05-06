@@ -1,40 +1,25 @@
 // src/app/api/devices/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-
-// Use the same Device interface and connectedDevices object from the parent route
-interface Device {
-  id: string;
-  name: string;
-  ipAddress: string;
-  status: 'on' | 'off';
-  lastSeen: Date;
-  relayState: boolean;
-}
-
-// Reference to the in-memory storage for devices
-// In a production environment, you would use a database
-const connectedDevices: Record<string, Device> = {};
+import { getDevice, updateDeviceState, deleteDevice } from '@/lib/deviceStore';
 
 // GET /api/devices/[id] - Get a specific device
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
+    const device = getDevice(id);
     
     // Check if device exists
-    if (!connectedDevices[id]) {
+    if (!device) {
       return NextResponse.json(
         { error: 'Device not found' },
         { status: 404 }
       );
     }
     
-    // Update lastSeen timestamp
-    connectedDevices[id].lastSeen = new Date();
-    
-    return NextResponse.json(connectedDevices[id]);
+    return NextResponse.json(device);
   } catch (error) {
     console.error('Error fetching device:', error);
     return NextResponse.json(
@@ -47,37 +32,34 @@ export async function GET(
 // PATCH /api/devices/[id] - Update a device status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
     
+    console.log(`Updating device ${id} with:`, body);
+    
     // Check if device exists
-    if (!connectedDevices[id]) {
+    const device = getDevice(id);
+    if (!device) {
       return NextResponse.json(
         { error: 'Device not found' },
         { status: 404 }
       );
     }
     
-    // Update device properties
+    // Update relay state
     if (body.relayState !== undefined) {
-      connectedDevices[id].relayState = body.relayState;
+      const updatedDevice = updateDeviceState(id, body.relayState);
+      return NextResponse.json(updatedDevice);
     }
     
-    if (body.status) {
-      connectedDevices[id].status = body.status;
-    }
-    
-    // Update lastSeen timestamp
-    connectedDevices[id].lastSeen = new Date();
-    
-    return NextResponse.json(connectedDevices[id]);
+    return NextResponse.json(device);
   } catch (error) {
     console.error('Error updating device:', error);
     return NextResponse.json(
-      { error: 'Failed to update device' },
+      { error: 'Failed to update device', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -86,21 +68,18 @@ export async function PATCH(
 // DELETE /api/devices/[id] - Remove a device
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
-    // Check if device exists
-    if (!connectedDevices[id]) {
+    const deleted = deleteDevice(id);
+    if (!deleted) {
       return NextResponse.json(
         { error: 'Device not found' },
         { status: 404 }
       );
     }
-    
-    // Delete device
-    delete connectedDevices[id];
     
     return NextResponse.json({ success: true });
   } catch (error) {
