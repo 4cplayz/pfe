@@ -327,7 +327,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
 
         // Redirect to a success page or back to home after a brief delay
         setTimeout(() => {
-          router.push('/');
+          router.push('/journal-view/thanks');
         }, 2000);
       } else {
         throw new Error("La soumission a échoué");

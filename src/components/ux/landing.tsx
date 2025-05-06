@@ -116,7 +116,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Plateforme de Journalisation Numérique pour Étudiants
+        © {new Date().getFullYear()} Plateforme de Journalisation Numérique pour Étudiants iato.ca
       </footer>
     </div>
   );
