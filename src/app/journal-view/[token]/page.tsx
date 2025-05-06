@@ -393,6 +393,23 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
     return userLevel >= journalLevel;
   };
 
+  const getFormattedTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString('fr-CA', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const getFormattedDate = () => {
+    const now = new Date();
+    return now.toLocaleDateString('fr-CA', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-6">
@@ -474,18 +491,18 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                   <div className="space-y-1 ">
                     <Label className="text-xs text-muted-foreground">Date</Label>
                     {isMobile ? 
-                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getCurrentDateTime().split(',')[0]}</div>
+                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getFormattedDate()}</div>
                     :
-                    <Input value={getCurrentDateTime().split(',')[0]} readOnly />
+                    <Input value={getFormattedDate()} readOnly />
                     }
                   </div>
                   <div className="space-y-1 ">
                     <Label className="text-xs text-muted-foreground">Heure de début</Label>
                    
                     {isMobile ? 
-                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getCurrentDateTime().split(',')[1]?.trim()}</div>
+                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getFormattedTime()}</div>
                     :
-                    <Input value={getCurrentDateTime().split(',')[1]?.trim()} readOnly />
+                    <Input value={getFormattedTime()} readOnly />
                     }
                   </div>
                 </div>
@@ -618,9 +635,9 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                   <Label className="text-xs text-muted-foreground">Temps de fin</Label>
                   
                   {isMobile ? 
-                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getCurrentDateTime().split(',')[1]?.trim()}</div>
+                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getFormattedTime()}</div>
                     :
-                    <Input value={getCurrentDateTime().split(',')[1]?.trim()} readOnly />
+                    <Input value={getFormattedTime()} readOnly />
                     }
                 </div>
                 <div></div>
