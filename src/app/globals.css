@@ -158,3 +158,111 @@
     @apply bg-background text-foreground;
   }
 }
+
+@supports (-webkit-touch-callout: none) {
+  /* Target Safari specifically */
+  input,
+  textarea,
+  select {
+    /* Force background color */
+    -webkit-background-color: var(--background);
+    background-color: var(--background);
+    
+    /* Force border color and width */
+    border: 1px solid var(--border);
+    
+    /* Ensure border radius is applied */
+    -webkit-border-radius: var(--radius);
+    border-radius: var(--radius);
+    
+    /* Force correct text color */
+    -webkit-text-fill-color: var(--foreground);
+    color: var(--foreground);
+    
+    /* Add margin-y of 5px */
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+  
+  /* Ensure disabled inputs maintain proper styling */
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    background-color: var(--muted);
+    -webkit-background-color: var(--muted);
+    -webkit-text-fill-color: var(--muted-foreground);
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+  
+  /* Fix for Safari focus styles */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--ring);
+    -webkit-box-shadow: 0 0 0 1px var(--ring);
+    box-shadow: 0 0 0 1px var(--ring);
+  }
+  
+  /* Fix broken autocomplete styling in Safari */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    -webkit-box-shadow: 0 0 0px 1000px var(--background) inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+  
+  /* Specific fixes for different input types in Safari */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    min-height: 2.5rem;
+    padding: 0.5rem;
+  }
+  
+  /* Fix for Textareas in Safari */
+  textarea {
+    min-height: 5rem;
+    line-height: 1.5;
+    padding: 0.75rem;
+  }
+}
+
+/* Add specific mobile fixes */
+@media screen and (max-width: 768px) {
+  /* Force styles for iOS Safari */
+  @supports (-webkit-touch-callout: none) {
+    input, 
+    textarea, 
+    select {
+      font-size: 16px !important; /* Prevent zoom */
+      padding: 0.75rem !important; /* Ensure adequate padding */
+      -webkit-appearance: none !important; /* Force appearance */
+      appearance: none !important;
+      background-color: var(--background) !important;
+      -webkit-background-color: var(--background) !important;
+      border: 1px solid var(--border) !important;
+      margin-top: 0 !important; /* Force margin-y */
+      margin-bottom: 1rem !important; /* Force margin-y */
+    }
+    
+    /* Force specific styling for inputs */
+    .form-input,
+    [class*="input"],
+    [class*="textarea"] {
+      background-color: var(--background) !important;
+      border-color: var(--border) !important;
+      color: var(--foreground) !important;
+      margin-top: 0 !important; /* Force margin-y */
+      margin-bottom: 1rem !important; /* Force margin-y */
+    }
+    
+    /* Force Safari to respect border radius */
+    input, textarea, select, button {
+      border-radius: var(--radius) !important;
+      -webkit-border-radius: var(--radius) !important;
+    }
+  }
+}

@@ -24,6 +24,22 @@ export const defaultMetadata: Metadata = {
   keywords: ["journal numérique", "laboratoire", "éducation", "science", "documentation", "étudiants"],
   referrer: "origin-when-cross-origin",
   
+  // Mobile-specific viewport settings
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,  // Prevents pinch zooming on Safari (can be controversial for accessibility)
+    userScalable: false, // Prevents user scaling (improves form behavior on iOS)
+    viewportFit: 'cover', // Important for iOS devices with notches
+  },
+  
+  // Apple-specific metadata
+  appleWebApp: {
+    capable: true, // Makes your site feel more app-like on iOS
+    statusBarStyle: 'black-translucent',
+    title: siteName,
+  },
+  
   // Control crawler behavior
   robots: {
     index: true,
@@ -34,15 +50,23 @@ export const defaultMetadata: Metadata = {
     },
   },
   
-
-  
   // Icons
   icons: {
     icon: [
       { url: "/favicon.ico" },
     ],
+    // Add Apple touch icons for Safari
+    apple: [
+      { url: "/iato_500x500_B.svg", sizes: "180x180", type: "image/svg+xml" }
+    ],
   },
   
+  // Add mobile app capability
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "format-detection": "telephone=no",
+    "mobile-web-app-capable": "yes",
+  }
 };
 
 // Function to create page-specific metadata
