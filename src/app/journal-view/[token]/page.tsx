@@ -17,6 +17,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useJournalSubmissions } from '@/hooks/use-journal-submissions';
 import { CreateJournalSubmission, SectionResponse } from '@/types/journal-submission';
 import DynamicSvg from '@/components/ux/dynamicSvg';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface JournalViewPageProps {
   params: Promise<{
@@ -65,6 +66,8 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
   const [loadingJournal, setLoadingJournal] = useState(false);
   const [formResponses, setFormResponses] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isMobile = useIsMobile();
 
   // For tracking time
   const startTimeRef = useRef<Date>(new Date());
@@ -470,11 +473,20 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1 ">
                     <Label className="text-xs text-muted-foreground">Date</Label>
+                    {isMobile ? 
+                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getCurrentDateTime().split(',')[0]}</div>
+                    :
                     <Input value={getCurrentDateTime().split(',')[0]} readOnly />
+                    }
                   </div>
                   <div className="space-y-1 ">
                     <Label className="text-xs text-muted-foreground">Heure de début</Label>
+                   
+                    {isMobile ? 
+                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getCurrentDateTime().split(',')[1]?.trim()}</div>
+                    :
                     <Input value={getCurrentDateTime().split(',')[1]?.trim()} readOnly />
+                    }
                   </div>
                 </div>
 
@@ -604,7 +616,12 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">Temps de fin</Label>
-                  <Input value={getCurrentDateTime().split(',')[1]?.trim()} readOnly />
+                  
+                  {isMobile ? 
+                    <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getCurrentDateTime().split(',')[1]?.trim()}</div>
+                    :
+                    <Input value={getCurrentDateTime().split(',')[1]?.trim()} readOnly />
+                    }
                 </div>
                 <div></div>
               </div>
