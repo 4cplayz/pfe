@@ -498,7 +498,7 @@ export default function JournalViewPage({ params }: JournalViewPageProps) {
                   </div>
                   <div className="space-y-1 ">
                     <Label className="text-xs text-muted-foreground">Heure de début</Label>
-                   
+
                     {isMobile ? 
                     <div className=' border bg-input/30 border-border flex items-center rounded-lg py-1 px-2'>{getFormattedTime()}</div>
                     :

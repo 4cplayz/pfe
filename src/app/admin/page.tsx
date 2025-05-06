@@ -14,7 +14,23 @@ export default function AdminDashboard() {
           <CardTitle>Admin Dashboard</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Welcome to the admin dashboard.</p>
+          <p>Bienvenue sur le tableau de bord administrateur.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Controleur d'alimentation</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Card>
+            <CardHeader>
+              Nom de l'appareill : 
+            </CardHeader>
+            <CardContent>
+              Basculer l'allumation
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
     </div>
