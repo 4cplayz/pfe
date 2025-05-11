@@ -14,7 +14,7 @@ let statusData: {
 };
 
 // Configuration
-const HEARTBEAT_TIMEOUT_MS = 10000; // 1 minute
+const HEARTBEAT_TIMEOUT_MS = 20000; // 1 minute
 const CLEANUP_INTERVAL_MS = 30000; // 30 seconds
 
 // Function to remove inactive devices
