@@ -2,9 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button"; // Added Button import
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react"; // Added RefreshCw icon
 
 // Define interface for device structure
 interface Device {
@@ -17,18 +18,28 @@ export default function AdminDashboard() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingDevices, setUpdatingDevices] = useState<Record<string, boolean>>({});
+  const [pollingActive, setPollingActive] = useState(false); // New state for polling toggle
   const { toast } = useToast();
 
-  // Fetch status regularly to keep the devices list updated
+  // Fetch status once on component mount
   useEffect(() => {
     fetchStatus();
-    
-    // Set up polling to fetch status every 5 seconds
-    const interval = setInterval(fetchStatus, 5000);
-    
-    // Clean up interval on component unmount
-    return () => clearInterval(interval);
   }, []);
+
+  // Set up or tear down polling based on pollingActive state
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    // Only set up interval if polling is active
+    if (pollingActive) {
+      interval = setInterval(fetchStatus, 5000);
+    }
+    
+    // Clean up interval when component unmounts or polling is deactivated
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [pollingActive]); // Only re-run this effect when pollingActive changes
 
   const fetchStatus = async () => {
     try {
@@ -56,6 +67,17 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Toggle polling active/inactive
+  const togglePolling = () => {
+    const newState = !pollingActive;
+    setPollingActive(newState);
+    
+    toast({
+      title: newState ? "Auto-refresh enabled" : "Auto-refresh disabled",
+      description: newState ? "Device status will update every 5 seconds" : "Device status will not update automatically",
+    });
   };
 
   // Update a specific device's status via API
@@ -149,6 +171,27 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Connected Devices</h1>
+        
+        {/* Add polling controls */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant={pollingActive ? "default" : "outline"} 
+            onClick={togglePolling}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${pollingActive ? "animate-spin" : ""}`} />
+            {pollingActive ? "Auto-refresh ON" : "Auto-refresh OFF"}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={fetchStatus}
+            disabled={isLoading}
+            title="Refresh now"
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       {isLoading && devices.length === 0 ? (
