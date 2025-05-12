@@ -14,11 +14,17 @@ let statusData: {
 };
 
 // Configuration
-const HEARTBEAT_TIMEOUT_MS = 20000; // 1 minute
+const HEARTBEAT_TIMEOUT_MS = 20000; // 20 seconds
 const CLEANUP_INTERVAL_MS = 30000; // 30 seconds
 
-// Function to remove inactive devices
+// Optimization: Only run cleanup if there are devices to check
 function cleanupInactiveDevices() {
+  // Skip cleanup if there are no devices to check
+  if (statusData.devices.length === 0) {
+    console.log(`Skipping cleanup - no devices registered at ${new Date().toISOString()}`);
+    return;
+  }
+  
   console.log(`Running cleanup of inactive devices at ${new Date().toISOString()}`);
   console.log(`Current devices before cleanup: ${JSON.stringify(statusData.devices)}`);
   
@@ -52,15 +58,20 @@ function cleanupInactiveDevices() {
   console.log(`Current devices after cleanup: ${JSON.stringify(statusData.devices)}`);
 }
 
-// Run cleanup on each request
+// Optimization: Only perform cleanup when needed
 function performOnDemandCleanup() {
-  console.log('Performing on-demand cleanup check...');
-  cleanupInactiveDevices();
+  // Only run cleanup if there are devices to check
+  if (statusData.devices.length > 0) {
+    console.log('Performing on-demand cleanup check...');
+    cleanupInactiveDevices();
+  } else {
+    console.log('Skipping on-demand cleanup - no devices registered');
+  }
 }
 
 // GET /api/status - Get all devices status
 export async function GET(request: NextRequest) {
-  // Force cleanup check on each request
+  // Force cleanup check on each request, but only if devices exist
   performOnDemandCleanup();
   
   // Optionally allow filtering by id
@@ -84,10 +95,7 @@ export async function GET(request: NextRequest) {
 // POST /api/status - Add or update a device status
 export async function POST(request: NextRequest) {
   try {
-    // Force cleanup check on each request
-    performOnDemandCleanup();
-    
-    // Parse the request body
+    // Parse the request body first, before any cleanup
     const body = await request.json();
     console.log('Received POST with body:', body);
     
@@ -101,6 +109,9 @@ export async function POST(request: NextRequest) {
     
     // Check if this is a heartbeat request
     const isHeartbeat = body.heartbeat === true;
+    
+    // Force cleanup check on each request, but only if devices exist
+    performOnDemandCleanup();
     
     // For regular status updates, isActive is required unless it's a heartbeat
     let isActive;
@@ -168,9 +179,6 @@ export async function POST(request: NextRequest) {
 // DELETE /api/status - Remove a device
 export async function DELETE(request: NextRequest) {
   try {
-    // Force cleanup check on each request
-    performOnDemandCleanup();
-    
     const id = request.nextUrl.searchParams.get('id');
     
     if (!id) {
@@ -178,6 +186,13 @@ export async function DELETE(request: NextRequest) {
         { error: 'id parameter is required' },
         { status: 400 }
       );
+    }
+    
+    // Skip cleanup if no devices or only targeting one device for deletion
+    if (statusData.devices.length > 1) {
+      performOnDemandCleanup();
+    } else {
+      console.log('Skipping cleanup before deletion - only one device or none registered');
     }
 
     console.log(`Manually deleting device ${id}`);
