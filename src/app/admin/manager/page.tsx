@@ -67,8 +67,8 @@ export default function SubmissionManager() {
   const [submissions, setSubmissions] = useState<JournalSubmissionWithDetails[]>([]);
   const [filteredSubmissions, setFilteredSubmissions] = useState<JournalSubmissionWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [dateFilter, setDateFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [dateFilter, setDateFilter] = useState<string>("");
   const [selectedSubmission, setSelectedSubmission] = useState<JournalSubmissionWithDetails | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
