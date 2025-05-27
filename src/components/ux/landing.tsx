@@ -10,10 +10,10 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Navbar } from '@/components/ux/nav';
 
-// Form validation schema
+// Schéma de validation du formulaire
 const formSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  username: z.string().min(1, "Le nom d'utilisateur est requis"),
+  password: z.string().min(1, "Le mot de passe est requis"),
 });
 
 export default function LandingPage() {
@@ -21,11 +21,11 @@ export default function LandingPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Hard-coded credentials (in a real app, this would be handled securely on the server)
+  // Identifiants en dur (dans une application réelle, cela serait géré de manière sécurisée sur le serveur)
   const ADMIN_USERNAME = "admin";
   const ADMIN_PASSWORD = "admin123";
 
-  // Initialize form
+  // Initialisation du formulaire
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,17 +34,17 @@ export default function LandingPage() {
     },
   });
 
-  // Handle form submission
+  // Gérer la soumission du formulaire
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setError(null);
 
-    // Simple validation against hard-coded credentials
+    // Validation simple par rapport aux identifiants en dur
     if (values.username === ADMIN_USERNAME && values.password === ADMIN_PASSWORD) {
-      // Redirect to admin page
+      // Rediriger vers la page d'administration
       router.push('/admin');
     } else {
-      setError('Invalid username or password');
+      setError('Nom d\'utilisateur ou mot de passe invalide');
       setIsLoading(false);
     }
   }
@@ -57,7 +57,7 @@ export default function LandingPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <h1 className="text-2xl font-semibold tracking-tight">Plateforme de Journalisation</h1>
-            <p className="text-muted-foreground mt-2">Log in to access your admin dashboard</p>
+            <p className="text-muted-foreground mt-2">Connectez-vous pour accéder à votre tableau de bord d'administration</p>
           </div>
 
           <Form {...form}>
@@ -67,10 +67,10 @@ export default function LandingPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Nom d'utilisateur</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your username"
+                        placeholder="Entrez votre nom d'utilisateur"
                         disabled={isLoading}
                         {...field}
                       />
@@ -85,11 +85,11 @@ export default function LandingPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Mot de passe</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder="Entrez votre mot de passe"
                         disabled={isLoading}
                         {...field}
                       />
@@ -108,7 +108,7 @@ export default function LandingPage() {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Log in"}
+                {isLoading ? "Connexion en cours..." : "Se connecter"}
               </Button>
             </form>
           </Form>
